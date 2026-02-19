@@ -6,6 +6,8 @@
     "./client": "./index.ts"
   },
   "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,7 +15,11 @@
   "license": "ISC",
   "packageManager": "pnpm@10.4.1",
   "dependencies": {
-    "@prisma/client": "6.9.0",
-    "prisma": "^6.9.0"
+    "@neondatabase/serverless": "^1.0.2",
+    "@types/pg": "^8.16.0",
+    "dotenv": "^17.3.1",
+    "drizzle-kit": "^0.31.9",
+    "drizzle-orm": "^0.45.1",
+    "pg": "^8.18.0"
   }
 }

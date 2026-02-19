@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import prismaClient from "@workspace/db/client";
+import { db, roomsTable, roomParticipantsTable, chatsTable, drawsTable, usersTable } from "@workspace/db/client";
 import { random } from "../utils";
 import { JoinRoomSchema } from "@workspace/common";
+import { eq, desc } from "drizzle-orm";
 
 export async function createRoomController(req: Request, res: Response) {
   try {
@@ -15,15 +16,20 @@ export async function createRoomController(req: Request, res: Response) {
       return;
     }
 
-    const room = await prismaClient.room.create({
-      data: {
-        title: req.body.title,
-        joinCode,
-        adminId: userId,
-        participants: {
-          connect: [{ id: userId }],
-        },
-      },
+    // Use transaction for atomic creation
+    const room = await db.transaction(async (tx) => {
+        const [insertedRoom] = await tx.insert(roomsTable).values({
+            title: req.body.title,
+            joinCode,
+            adminId: userId,
+        }).returning();
+
+        await tx.insert(roomParticipantsTable).values({
+            roomId: insertedRoom.id,
+            userId: userId,
+        });
+
+        return insertedRoom;
     });
 
     res.status(201).json({
@@ -57,18 +63,33 @@ export async function joinRoomController(req: Request, res: Response) {
 
   try {
     const joinCode = validInputs.data.joinCode;
-    const room = await prismaClient.room.update({
-      where: {
-        joinCode: joinCode,
-      },
-      data: {
-        participants: {
-          connect: {
-            id: userId,
-          },
-        },
-      },
-    });
+
+    // First find the room by join code
+    const existingRooms = await db.select().from(roomsTable).where(eq(roomsTable.joinCode, joinCode));
+    const room = existingRooms[0];
+
+    if (!room) {
+      res.status(404).json({
+        message: "Room not found",
+      });
+      return;
+    }
+
+    // Insert into participants
+    try {
+        await db.insert(roomParticipantsTable).values({
+            roomId: room.id,
+            userId: userId,
+        });
+    } catch (e: any) {
+        // If unique constraint violation (already joined), handle gracefully or ignore
+        if (e.code === '23505') {
+            console.log("User already in room");
+        } else {
+            throw e;
+        }
+    }
+
     res.json({
       message: "Room Joined Successfully",
       room,
@@ -92,50 +113,56 @@ export async function fetchAllRoomsController(req: Request, res: Response) {
     return;
   }
   try {
-    const rooms = await prismaClient.room.findMany({
-      where: {
-        participants: {
-          some: { id: userId },
-        },
-      },
-      select: {
-        id: true,
-        title: true,
-        joinCode: true,
-        createdAt: true,
-        admin: {
-          select: {
-            username: true,
-          },
-        },
-        adminId: true,
-        Chat: {
-          take: 1,
-          orderBy: {
-            serialNumber: "desc",
-          },
-          select: {
-            user: {
-              select: {
-                username: true,
-              },
-            },
-            content: true,
-            createdAt: true,
-          },
-        },
-        Draw: {
-          take: 10,
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    // Replicating logic using multiple queries for simplicity first
+    // TODO: Optimize if necessary
 
-    const sortedRooms = rooms.sort((a, b) => {
-      const aLatestChat = a.Chat[0]?.createdAt || a.createdAt;
-      const bLatestChat = b.Chat[0]?.createdAt || b.createdAt;
+    // Fetch rooms where userId is in participants
+    const userRooms = await db.select({
+       id: roomsTable.id,
+       title: roomsTable.title,
+       joinCode: roomsTable.joinCode,
+       createdAt: roomsTable.createdAt,
+       adminId: roomsTable.adminId,
+       admin: {
+            username: usersTable.username,
+       }
+    })
+    .from(roomsTable)
+    .innerJoin(roomParticipantsTable, eq(roomsTable.id, roomParticipantsTable.roomId))
+    .innerJoin(usersTable, eq(roomsTable.adminId, usersTable.id))
+    .where(eq(roomParticipantsTable.userId, userId))
+    .orderBy(desc(roomsTable.createdAt));
+
+    // For each room, fetch latest Chat and Draw
+    const roomsWithDetails = await Promise.all(userRooms.map(async (room) => {
+        const latestChat = await db.select({
+            content: chatsTable.content,
+            createdAt: chatsTable.createdAt,
+            user: {
+                username: usersTable.username
+            }
+        })
+        .from(chatsTable)
+        .innerJoin(usersTable, eq(chatsTable.userId, usersTable.id))
+        .where(eq(chatsTable.roomId, room.id))
+        .orderBy(desc(chatsTable.serialNumber)) // serialNumber is auto inc
+        .limit(1);
+
+        const latestDraws = await db.select()
+        .from(drawsTable)
+        .where(eq(drawsTable.roomId, room.id))
+        .limit(10);
+        
+        return {
+            ...room,
+            Chat: latestChat,
+            Draw: latestDraws
+        };
+    }));
+
+    const sortedRooms = roomsWithDetails.sort((a, b) => {
+      const aLatestChat = a.Chat[0]?.createdAt || a.createdAt || new Date(0);
+      const bLatestChat = b.Chat[0]?.createdAt || b.createdAt || new Date(0);
       return new Date(bLatestChat).getTime() - new Date(aLatestChat).getTime();
     });
 

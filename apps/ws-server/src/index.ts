@@ -1,5 +1,6 @@
 import { WebSocket, WebSocketServer } from "ws";
-import prismaClient from "@workspace/db/client";
+import { db, chatsTable, drawsTable, usersTable } from "@workspace/db/client";
+import { eq } from "drizzle-orm";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { WebSocketMessageSchema } from "@workspace/common";
 import { config } from "dotenv";
@@ -90,33 +91,38 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
           return;
         }
         try {
-          const addChat = await prismaClient.chat.create({
-            data: {
-              userId: validMessage.data.userId!,
-              roomId: validMessage.data.roomId!,
-              content: validMessage.data.content!,
-            },
-            select: {
-              id: true,
-              content: true,
-              serialNumber: true,
-              createdAt: true,
-              userId: true,
-              user: {
-                select: {
-                  username: true,
-                },
-              },
-              roomId: true,
-            },
-          });
+            const [addChat] = await db.insert(chatsTable).values({
+                userId: validMessage.data.userId!,
+                roomId: validMessage.data.roomId!,
+                content: validMessage.data.content!,
+            }).returning({
+                id: chatsTable.id,
+                content: chatsTable.content,
+                serialNumber: chatsTable.serialNumber,
+                createdAt: chatsTable.createdAt,
+                userId: chatsTable.userId,
+                roomId: chatsTable.roomId,
+            });
+
+            // Need to fetch user details separately or join?
+            // Returning clause only returns table columns. 
+            // To match previous Select behavior (including user relation), we might need a subsequent fetch or just return what we have if the client handles it.
+            // But let's fetch user name if needed by client.
+            const user = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, addChat.userId));
+            
+            const chatWithUser = {
+                ...addChat,
+                user: {
+                    username: user[0]?.username
+                }
+            };
           socketList?.forEach((member) => {
             member.socket.send(
               JSON.stringify({
                 type: "chat_message",
                 userId: validMessage.data.userId!,
                 roomId: validMessage.data.roomId!,
-                content: JSON.stringify(addChat),
+                content: JSON.stringify(chatWithUser),
               })
             );
           });
@@ -158,8 +164,7 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
           switch (drawData.type) {
             case "create":
               draw = drawData.modifiedDraw;
-              addedDraw = await prismaClient.draw.create({
-                data: {
+              await db.insert(drawsTable).values({
                   id: draw.id,
                   shape: draw.shape,
                   strokeStyle: draw.strokeStyle,
@@ -174,16 +179,13 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
                   text: draw.text,
                   points: draw.points,
                   roomId: validMessage.data.roomId!,
-                },
               });
               break;
             case "move":
             case "edit":
             case "resize":
               draw = drawData.modifiedDraw;
-              addedDraw = await prismaClient.draw.update({
-                where: { id: draw.id },
-                data: {
+              await db.update(drawsTable).set({
                   startX: draw.startX,
                   startY: draw.startY,
                   endX: draw.endX,
@@ -196,14 +198,11 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
                   lineWidth: draw.lineWidth,
                   font: draw.font,
                   fontSize: draw.fontSize,
-                },
-              });
+              }).where(eq(drawsTable.id, draw.id));
               break;
             case "erase":
               draw = drawData.originalDraw;
-              addedDraw = await prismaClient.draw.delete({
-                where: { id: draw.id },
-              });
+              await db.delete(drawsTable).where(eq(drawsTable.id, draw.id));
               break;
           }
 
@@ -275,9 +274,8 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
       return;
     }
 
-    const userFound = await prismaClient.user.findFirst({
-      where: { id: verified.id },
-    });
+    const userResult = await db.select().from(usersTable).where(eq(usersTable.id, verified.id));
+    const userFound = userResult[0];
 
     if (!userFound) {
       console.log("User does not exist");

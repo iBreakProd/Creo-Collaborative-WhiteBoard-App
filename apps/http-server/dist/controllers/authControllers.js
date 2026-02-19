@@ -16,10 +16,11 @@ exports.signupController = signupController;
 exports.signinController = signinController;
 exports.signoutController = signoutController;
 exports.infoController = infoController;
-const client_1 = __importDefault(require("@workspace/db/client"));
+const client_1 = require("@workspace/db/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const common_1 = require("@workspace/common");
+const drizzle_orm_1 = require("drizzle-orm");
 function signupController(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const inputValidator = common_1.UserSignupSchema;
@@ -33,18 +34,16 @@ function signupController(req, res) {
         try {
             const saltrounds = parseInt(process.env.SALTROUNDS || "10");
             const hashedPwd = yield bcrypt_1.default.hash(validatedInput.data.password, saltrounds);
-            const userCreated = yield client_1.default.user.create({
-                data: {
-                    username: validatedInput.data.username,
-                    password: hashedPwd,
-                    name: validatedInput.data.name,
-                },
-            });
+            const userCreated = yield client_1.db.insert(client_1.usersTable).values({
+                username: validatedInput.data.username,
+                password: hashedPwd,
+                name: validatedInput.data.name,
+            }).returning();
             const user = {
-                id: userCreated.id,
-                username: userCreated.username,
-                name: userCreated.name,
-                photo: userCreated.photo,
+                id: userCreated[0].id,
+                username: userCreated[0].username,
+                name: userCreated[0].name,
+                photo: userCreated[0].photo,
             };
             const token = jsonwebtoken_1.default.sign(user, process.env.JWT_SECRET || "kjhytfrde45678iuytrfdcfgy6tr");
             res.cookie("jwt", token, {
@@ -61,7 +60,7 @@ function signupController(req, res) {
         catch (e) {
             console.log(e);
             const code = e.code;
-            if (code === "P2002") {
+            if (code === "23505") { // Postgres unique constraint violation code
                 res.status(401).json({
                     message: "Username already exists",
                 });
@@ -83,11 +82,8 @@ function signinController(req, res) {
             return;
         }
         try {
-            const userFound = yield client_1.default.user.findFirst({
-                where: {
-                    username: validatedInput.data.username,
-                },
-            });
+            const userResult = yield client_1.db.select().from(client_1.usersTable).where((0, drizzle_orm_1.eq)(client_1.usersTable.username, validatedInput.data.username));
+            const userFound = userResult[0];
             if (!userFound) {
                 res.status(404).json({
                     message: "The username does not exist",
@@ -138,12 +134,15 @@ function signoutController(req, res) {
 function infoController(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const userId = req.userId;
-        try {
-            const userFound = yield client_1.default.user.findUnique({
-                where: {
-                    id: userId,
-                },
+        if (!userId) {
+            res.status(401).json({
+                message: "User Id not found",
             });
+            return;
+        }
+        try {
+            const userResult = yield client_1.db.select().from(client_1.usersTable).where((0, drizzle_orm_1.eq)(client_1.usersTable.id, userId));
+            const userFound = userResult[0];
             const user = {
                 id: userFound === null || userFound === void 0 ? void 0 : userFound.id,
                 username: userFound === null || userFound === void 0 ? void 0 : userFound.username,

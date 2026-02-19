@@ -9,11 +9,12 @@
     "start": "node ./dist/index.js"
   },
   "dependencies": {
-    "@workspace/db": "workspace:*",
-    "@workspace/common": "workspace:*",
-    "@workspace/typescript-config": "workspace:*",
     "@types/ws": "^8.18.1",
+    "@workspace/common": "workspace:*",
+    "@workspace/db": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
     "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.45.1",
     "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",

@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
-import prismaClient from "@workspace/db/client";
+import { db, usersTable } from "@workspace/db/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { UserSigninSchema, UserSignupSchema } from "@workspace/common";
+import { eq } from "drizzle-orm";
 
 export async function signupController(req: Request, res: Response) {
   const inputValidator = UserSignupSchema;
@@ -21,18 +22,17 @@ export async function signupController(req: Request, res: Response) {
       validatedInput.data.password,
       saltrounds
     );
-    const userCreated = await prismaClient.user.create({
-      data: {
+    const userCreated = await db.insert(usersTable).values({
         username: validatedInput.data.username,
         password: hashedPwd,
         name: validatedInput.data.name,
-      },
-    });
+    }).returning();
+    
     const user = {
-      id: userCreated.id,
-      username: userCreated.username,
-      name: userCreated.name,
-      photo: userCreated.photo,
+      id: userCreated[0]?.id,
+      username: userCreated[0]?.username,
+      name: userCreated[0]?.name,
+      photo: userCreated[0]?.photo,
     };
     const token = jwt.sign(
       user,
@@ -51,7 +51,7 @@ export async function signupController(req: Request, res: Response) {
   } catch (e) {
     console.log(e);
     const code = (e as unknown as { code?: string }).code;
-    if (code === "P2002") {
+    if (code === "23505") { // Postgres unique constraint violation code
       res.status(401).json({
         message: "Username already exists",
       });
@@ -75,11 +75,9 @@ export async function signinController(req: Request, res: Response) {
   }
 
   try {
-    const userFound = await prismaClient.user.findFirst({
-      where: {
-        username: validatedInput.data.username,
-      },
-    });
+    const userResult = await db.select().from(usersTable).where(eq(usersTable.username, validatedInput.data.username));
+    const userFound = userResult[0];
+
     if (!userFound) {
       res.status(404).json({
         message: "The username does not exist",
@@ -134,12 +132,16 @@ export async function signoutController(req: Request, res: Response) {
 export async function infoController(req: Request, res: Response) {
   const userId = req.userId;
 
-  try {
-    const userFound = await prismaClient.user.findUnique({
-      where: {
-        id: userId,
-      },
+  if (!userId) {
+    res.status(401).json({
+      message: "User Id not found",
     });
+    return;
+  }
+
+  try {
+    const userResult = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    const userFound = userResult[0];
 
     const user = {
       id: userFound?.id,

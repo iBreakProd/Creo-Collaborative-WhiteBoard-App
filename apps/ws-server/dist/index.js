@@ -13,7 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = require("ws");
-const client_1 = __importDefault(require("@workspace/db/client"));
+const client_1 = require("@workspace/db/client");
+const drizzle_orm_1 = require("drizzle-orm");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const common_1 = require("@workspace/common");
 const dotenv_1 = require("dotenv");
@@ -27,6 +28,7 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
     const token = searchParams.get("token");
     userVerificationStatus.set(socket, { verified: false });
     socket.on("message", (data) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         const userStatus = userVerificationStatus.get(socket);
         if (!(userStatus === null || userStatus === void 0 ? void 0 : userStatus.verified)) {
             socket.send(JSON.stringify({
@@ -73,32 +75,32 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
                     return;
                 }
                 try {
-                    const addChat = yield client_1.default.chat.create({
-                        data: {
-                            userId: validMessage.data.userId,
-                            roomId: validMessage.data.roomId,
-                            content: validMessage.data.content,
-                        },
-                        select: {
-                            id: true,
-                            content: true,
-                            serialNumber: true,
-                            createdAt: true,
-                            userId: true,
-                            user: {
-                                select: {
-                                    username: true,
-                                },
-                            },
-                            roomId: true,
-                        },
+                    const [addChat] = yield client_1.db.insert(client_1.chatsTable).values({
+                        userId: validMessage.data.userId,
+                        roomId: validMessage.data.roomId,
+                        content: validMessage.data.content,
+                    }).returning({
+                        id: client_1.chatsTable.id,
+                        content: client_1.chatsTable.content,
+                        serialNumber: client_1.chatsTable.serialNumber,
+                        createdAt: client_1.chatsTable.createdAt,
+                        userId: client_1.chatsTable.userId,
+                        roomId: client_1.chatsTable.roomId,
                     });
+                    // Need to fetch user details separately or join?
+                    // Returning clause only returns table columns. 
+                    // To match previous Select behavior (including user relation), we might need a subsequent fetch or just return what we have if the client handles it.
+                    // But let's fetch user name if needed by client.
+                    const user = yield client_1.db.select({ username: client_1.usersTable.username }).from(client_1.usersTable).where((0, drizzle_orm_1.eq)(client_1.usersTable.id, addChat.userId));
+                    const chatWithUser = Object.assign(Object.assign({}, addChat), { user: {
+                            username: (_a = user[0]) === null || _a === void 0 ? void 0 : _a.username
+                        } });
                     socketList === null || socketList === void 0 ? void 0 : socketList.forEach((member) => {
                         member.socket.send(JSON.stringify({
                             type: "chat_message",
                             userId: validMessage.data.userId,
                             roomId: validMessage.data.roomId,
-                            content: JSON.stringify(addChat),
+                            content: JSON.stringify(chatWithUser),
                         }));
                     });
                 }
@@ -127,52 +129,45 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
                     switch (drawData.type) {
                         case "create":
                             draw = drawData.modifiedDraw;
-                            addedDraw = yield client_1.default.draw.create({
-                                data: {
-                                    id: draw.id,
-                                    shape: draw.shape,
-                                    strokeStyle: draw.strokeStyle,
-                                    fillStyle: draw.fillStyle,
-                                    lineWidth: draw.lineWidth,
-                                    font: draw.font,
-                                    fontSize: draw.fontSize,
-                                    startX: draw.startX,
-                                    startY: draw.startY,
-                                    endX: draw.endX,
-                                    endY: draw.endY,
-                                    text: draw.text,
-                                    points: draw.points,
-                                    roomId: validMessage.data.roomId,
-                                },
+                            yield client_1.db.insert(client_1.drawsTable).values({
+                                id: draw.id,
+                                shape: draw.shape,
+                                strokeStyle: draw.strokeStyle,
+                                fillStyle: draw.fillStyle,
+                                lineWidth: draw.lineWidth,
+                                font: draw.font,
+                                fontSize: draw.fontSize,
+                                startX: draw.startX,
+                                startY: draw.startY,
+                                endX: draw.endX,
+                                endY: draw.endY,
+                                text: draw.text,
+                                points: draw.points,
+                                roomId: validMessage.data.roomId,
                             });
                             break;
                         case "move":
                         case "edit":
                         case "resize":
                             draw = drawData.modifiedDraw;
-                            addedDraw = yield client_1.default.draw.update({
-                                where: { id: draw.id },
-                                data: {
-                                    startX: draw.startX,
-                                    startY: draw.startY,
-                                    endX: draw.endX,
-                                    endY: draw.endY,
-                                    text: draw.text,
-                                    points: draw.points,
-                                    shape: draw.shape,
-                                    strokeStyle: draw.strokeStyle,
-                                    fillStyle: draw.fillStyle,
-                                    lineWidth: draw.lineWidth,
-                                    font: draw.font,
-                                    fontSize: draw.fontSize,
-                                },
-                            });
+                            yield client_1.db.update(client_1.drawsTable).set({
+                                startX: draw.startX,
+                                startY: draw.startY,
+                                endX: draw.endX,
+                                endY: draw.endY,
+                                text: draw.text,
+                                points: draw.points,
+                                shape: draw.shape,
+                                strokeStyle: draw.strokeStyle,
+                                fillStyle: draw.fillStyle,
+                                lineWidth: draw.lineWidth,
+                                font: draw.font,
+                                fontSize: draw.fontSize,
+                            }).where((0, drizzle_orm_1.eq)(client_1.drawsTable.id, draw.id));
                             break;
                         case "erase":
                             draw = drawData.originalDraw;
-                            addedDraw = yield client_1.default.draw.delete({
-                                where: { id: draw.id },
-                            });
+                            yield client_1.db.delete(client_1.drawsTable).where((0, drizzle_orm_1.eq)(client_1.drawsTable.id, draw.id));
                             break;
                     }
                     socketList === null || socketList === void 0 ? void 0 : socketList.forEach((member) => {
@@ -227,9 +222,8 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
             socket.close();
             return;
         }
-        const userFound = yield client_1.default.user.findFirst({
-            where: { id: verified.id },
-        });
+        const userResult = yield client_1.db.select().from(client_1.usersTable).where((0, drizzle_orm_1.eq)(client_1.usersTable.id, verified.id));
+        const userFound = userResult[0];
         if (!userFound) {
             console.log("User does not exist");
             socket.send(JSON.stringify({
