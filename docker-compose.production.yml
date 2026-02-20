@@ -11,6 +11,8 @@ services:
       - API_URL=${API_URL}
       - WS_URL=${WS_URL}
       - BROWSER_URL=${BROWSER_URL}
+      - NEXT_PUBLIC_HTTP_URL=${API_URL}
+      - NEXT_PUBLIC_WS_URL=${WS_URL}
     networks:
       - creo_network
 

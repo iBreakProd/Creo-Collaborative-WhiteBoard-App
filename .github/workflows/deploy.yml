@@ -43,6 +43,9 @@ jobs:
           context: .
           file: ./apps/web/Dockerfile
           push: true
+          build-args: |
+            NEXT_PUBLIC_HTTP_URL=${{ secrets.API_URL }}
+            NEXT_PUBLIC_WS_URL=${{ secrets.WS_URL }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/creo-web:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/creo-web:latest

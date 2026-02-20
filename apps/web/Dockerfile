@@ -18,7 +18,13 @@ COPY packages/db ./packages/db
 COPY packages/common ./packages/common
 COPY packages/ui ./packages/ui
 
-RUN pnpm --filter @workspace/db build && \
+ARG NEXT_PUBLIC_HTTP_URL
+ARG NEXT_PUBLIC_WS_URL
+ENV NEXT_PUBLIC_HTTP_URL=$NEXT_PUBLIC_HTTP_URL
+ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
+
+RUN pnpm --filter @workspace/common build && \
+  pnpm --filter @workspace/db build && \
   pnpm --filter web build
 
 FROM node:22-alpine
