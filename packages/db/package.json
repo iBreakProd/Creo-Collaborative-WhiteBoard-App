@@ -1,11 +1,17 @@
 {
   "name": "@workspace/db",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    "./client": "./src/index.ts"
+    "./client": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "scripts": {
+    "build": "tsc -b",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "test": "echo \"Error: no test specified\" && exit 1"

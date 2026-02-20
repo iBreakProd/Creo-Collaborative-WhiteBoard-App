@@ -16,7 +16,8 @@ COPY apps/http-server ./apps/http-server
 COPY packages/db ./packages/db
 COPY packages/common ./packages/common
 
-RUN pnpm --filter @workspace/db build && \
+RUN pnpm --filter @workspace/common build && \
+  pnpm --filter @workspace/db build && \
   pnpm --filter http-server build
 
 FROM node:22-alpine

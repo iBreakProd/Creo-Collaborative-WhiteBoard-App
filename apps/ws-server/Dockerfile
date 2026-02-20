@@ -16,7 +16,8 @@ COPY apps/ws-server ./apps/ws-server
 COPY packages/db ./packages/db
 COPY packages/common ./packages/common
 
-RUN pnpm --filter @workspace/db build && \
+RUN pnpm --filter @workspace/common build && \
+  pnpm --filter @workspace/db build && \
   pnpm --filter ws-server build
 
 FROM node:22-alpine
