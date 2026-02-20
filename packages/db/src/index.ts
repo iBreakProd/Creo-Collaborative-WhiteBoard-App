@@ -4,12 +4,11 @@ import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
 import { Pool as PoolPg } from "pg";
 import { Pool as PoolNeon } from "@neondatabase/serverless";
-import * as schema from "./schema";
+import * as schema from "./schema.js";
 
-// Export schema for usage in apps
-export * from "./schema";
+export * from "./schema.js";
 
-let db: ReturnType<typeof drizzleNeon> | ReturnType<typeof drizzlePg>; // Simplification, types are slightly different but usable
+let db: ReturnType<typeof drizzleNeon> | ReturnType<typeof drizzlePg>;
 
 const env = process.env.NODE_ENV;
 
