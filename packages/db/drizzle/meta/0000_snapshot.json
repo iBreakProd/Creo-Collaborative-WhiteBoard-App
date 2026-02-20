@@ -1,35 +1,25 @@
 {
-  "id": "2d5b0a57-97ac-4d5b-905a-d3c6ec78caa3",
+  "id": "eb819080-df32-4840-9c03-0fcffd5f113f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.Chat": {
-      "name": "Chat",
+    "public.chat": {
+      "name": "chat",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "serialNumber": {
           "name": "serialNumber",
-          "type": "integer",
+          "type": "serial",
           "primaryKey": false,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "Chat_serialNumber_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
+          "notNull": true
         },
         "content": {
           "name": "content",
@@ -39,13 +29,13 @@
         },
         "userId": {
           "name": "userId",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
         "roomId": {
           "name": "roomId",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -53,16 +43,16 @@
           "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "Chat_userId_User_id_fk": {
-          "name": "Chat_userId_User_id_fk",
-          "tableFrom": "Chat",
-          "tableTo": "User",
+        "chat_userId_user_id_fk": {
+          "name": "chat_userId_user_id_fk",
+          "tableFrom": "chat",
+          "tableTo": "user",
           "columnsFrom": [
             "userId"
           ],
@@ -72,10 +62,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "Chat_roomId_Room_id_fk": {
-          "name": "Chat_roomId_Room_id_fk",
-          "tableFrom": "Chat",
-          "tableTo": "Room",
+        "chat_roomId_room_id_fk": {
+          "name": "chat_roomId_room_id_fk",
+          "tableFrom": "chat",
+          "tableTo": "room",
           "columnsFrom": [
             "roomId"
           ],
@@ -92,8 +82,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.Draw": {
-      "name": "Draw",
+    "public.draw": {
+      "name": "draw",
       "schema": "",
       "columns": {
         "id": {
@@ -171,23 +161,23 @@
         },
         "points": {
           "name": "points",
-          "type": "jsonb",
+          "type": "json",
           "primaryKey": false,
           "notNull": false
         },
         "roomId": {
           "name": "roomId",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "Draw_roomId_Room_id_fk": {
-          "name": "Draw_roomId_Room_id_fk",
-          "tableFrom": "Draw",
-          "tableTo": "Room",
+        "draw_roomId_room_id_fk": {
+          "name": "draw_roomId_room_id_fk",
+          "tableFrom": "draw",
+          "tableTo": "room",
           "columnsFrom": [
             "roomId"
           ],
@@ -204,50 +194,50 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public._participants": {
-      "name": "_participants",
+    "public.room_participants": {
+      "name": "room_participants",
       "schema": "",
       "columns": {
-        "A": {
-          "name": "A",
-          "type": "text",
+        "roomId": {
+          "name": "roomId",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "B": {
-          "name": "B",
-          "type": "text",
+        "userId": {
+          "name": "userId",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "_participants_A_Room_id_fk": {
-          "name": "_participants_A_Room_id_fk",
-          "tableFrom": "_participants",
-          "tableTo": "Room",
+        "room_participants_roomId_room_id_fk": {
+          "name": "room_participants_roomId_room_id_fk",
+          "tableFrom": "room_participants",
+          "tableTo": "room",
           "columnsFrom": [
-            "A"
+            "roomId"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
-        "_participants_B_User_id_fk": {
-          "name": "_participants_B_User_id_fk",
-          "tableFrom": "_participants",
-          "tableTo": "User",
+        "room_participants_userId_user_id_fk": {
+          "name": "room_participants_userId_user_id_fk",
+          "tableFrom": "room_participants",
+          "tableTo": "user",
           "columnsFrom": [
-            "B"
+            "userId"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -256,15 +246,16 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.Room": {
-      "name": "Room",
+    "public.room": {
+      "name": "room",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "title": {
           "name": "title",
@@ -280,7 +271,7 @@
         },
         "adminId": {
           "name": "adminId",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -288,16 +279,16 @@
           "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "Room_adminId_User_id_fk": {
-          "name": "Room_adminId_User_id_fk",
-          "tableFrom": "Room",
-          "tableTo": "User",
+        "room_adminId_user_id_fk": {
+          "name": "room_adminId_user_id_fk",
+          "tableFrom": "room",
+          "tableTo": "user",
           "columnsFrom": [
             "adminId"
           ],
@@ -310,8 +301,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "Room_joinCode_unique": {
-          "name": "Room_joinCode_unique",
+        "room_joinCode_unique": {
+          "name": "room_joinCode_unique",
           "nullsNotDistinct": false,
           "columns": [
             "joinCode"
@@ -322,15 +313,16 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.User": {
-      "name": "User",
+    "public.user": {
+      "name": "user",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "username": {
           "name": "username",
@@ -361,8 +353,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "User_username_unique": {
-          "name": "User_username_unique",
+        "user_username_unique": {
+          "name": "user_username_unique",
           "nullsNotDistinct": false,
           "columns": [
             "username"

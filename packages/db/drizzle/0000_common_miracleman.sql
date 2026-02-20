@@ -1,3 +1,4 @@
+CREATE TYPE "public"."shape" AS ENUM('rectangle', 'diamond', 'circle', 'line', 'arrow', 'text', 'freeHand');--> statement-breakpoint
 CREATE TABLE "chat" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"serialNumber" serial NOT NULL,
@@ -47,11 +48,6 @@ CREATE TABLE "user" (
 	CONSTRAINT "user_username_unique" UNIQUE("username")
 );
 --> statement-breakpoint
-DROP TABLE "Chat" CASCADE;--> statement-breakpoint
-DROP TABLE "Draw" CASCADE;--> statement-breakpoint
-DROP TABLE "_participants" CASCADE;--> statement-breakpoint
-DROP TABLE "Room" CASCADE;--> statement-breakpoint
-DROP TABLE "User" CASCADE;--> statement-breakpoint
 ALTER TABLE "chat" ADD CONSTRAINT "chat_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "chat" ADD CONSTRAINT "chat_roomId_room_id_fk" FOREIGN KEY ("roomId") REFERENCES "public"."room"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "draw" ADD CONSTRAINT "draw_roomId_room_id_fk" FOREIGN KEY ("roomId") REFERENCES "public"."room"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
