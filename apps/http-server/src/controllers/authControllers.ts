@@ -48,16 +48,19 @@ export async function signupController(req: Request, res: Response) {
       token,
     });
     return;
-  } catch (e) {
+  } catch (e: any) {
     console.log(e);
-    const code = (e as unknown as { code?: string }).code;
-    if (code === "23505") { // Postgres unique constraint violation code
-      res.status(401).json({
-        message: "Username already exists",
+    // Drizzle wraps Postgres errors, so the actual code is usually in e.cause
+    const dbError = e.cause || e;
+    
+    if (dbError.code === "23505" || e.message?.includes("23505") || dbError.message?.includes("duplicate key value violates unique constraint")) { 
+      res.status(409).json({
+        message: "Username is already taken. Please choose another one.",
       });
+      return;
     }
-    res.status(401).json({
-      message: "Error faced while creating user, try again",
+    res.status(500).json({
+      message: "Unable to create your account right now. Please try again.",
     });
   }
 }
@@ -116,8 +119,8 @@ export async function signinController(req: Request, res: Response) {
     return;
   } catch (e) {
     console.log(e);
-    res.status(401).json({
-      message: "Error faced while loging user in, try again",
+    res.status(500).json({
+      message: "Unable to sign you in at the moment. Please try again later.",
     });
   }
 }
@@ -155,8 +158,8 @@ export async function infoController(req: Request, res: Response) {
     });
   } catch (e) {
     console.log(e);
-    res.status(401).json({
-      message: "Error faced while getting user info, try again",
+    res.status(500).json({
+      message: "Unable to retrieve your profile information. Please refresh.",
     });
   }
 }

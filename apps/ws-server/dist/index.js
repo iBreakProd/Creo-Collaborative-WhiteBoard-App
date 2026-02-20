@@ -28,7 +28,13 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
     const token = searchParams.get("token");
     userVerificationStatus.set(socket, { verified: false });
     socket.on("message", (data) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a;
+        var _a, _b;
+        const dataString = data.toString();
+        if (dataString === "ping") {
+            console.log(`[WS Server] Heartbeat 'ping' received from User: ${((_a = userVerificationStatus.get(socket)) === null || _a === void 0 ? void 0 : _a.userId) || 'unverified'}`);
+            socket.send("pong");
+            return;
+        }
         const userStatus = userVerificationStatus.get(socket);
         if (!(userStatus === null || userStatus === void 0 ? void 0 : userStatus.verified)) {
             socket.send(JSON.stringify({
@@ -93,7 +99,7 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
                     // But let's fetch user name if needed by client.
                     const user = yield client_1.db.select({ username: client_1.usersTable.username }).from(client_1.usersTable).where((0, drizzle_orm_1.eq)(client_1.usersTable.id, addChat.userId));
                     const chatWithUser = Object.assign(Object.assign({}, addChat), { user: {
-                            username: (_a = user[0]) === null || _a === void 0 ? void 0 : _a.username
+                            username: (_b = user[0]) === null || _b === void 0 ? void 0 : _b.username
                         } });
                     socketList === null || socketList === void 0 ? void 0 : socketList.forEach((member) => {
                         member.socket.send(JSON.stringify({
@@ -191,6 +197,8 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
         }
     }));
     socket.on("close", () => {
+        const status = userVerificationStatus.get(socket);
+        console.log(`[WS Server] Connection closed for User: ${(status === null || status === void 0 ? void 0 : status.userId) || 'unverified'}`);
         userVerificationStatus.delete(socket);
         for (const [roomId, connections] of activeRooms.entries()) {
             const updatedConnections = connections.filter((conn) => conn.socket !== socket);
@@ -213,11 +221,13 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
     }
     try {
         const verified = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || "kjhytfrde45678iuytrfdcfgy6tr");
-        if (!(verified === null || verified === void 0 ? void 0 : verified.id)) {
-            console.log("User not authorised");
+        // Prevent DrizzleQueryError: valid UUID check
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(verified.id)) {
+            console.log("Invalid User ID format");
             socket.send(JSON.stringify({
                 type: "error_message",
-                content: "User not authorised",
+                content: "Corrupted authentication token. Please sign in again.",
             }));
             socket.close();
             return;
@@ -228,23 +238,23 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
             console.log("User does not exist");
             socket.send(JSON.stringify({
                 type: "error_message",
-                content: "User does not exist",
+                content: "Your account could not be completely verified. Please sign in again.",
             }));
             socket.close();
             return;
         }
         userVerificationStatus.set(socket, { verified: true, userId: verified.id });
+        console.log(`[WS Server] Connection verified and ready for User: ${verified.id}`);
         socket.send(JSON.stringify({
             type: "connection_ready",
             userId: verified.id,
         }));
     }
     catch (e) {
-        console.log(e);
-        console.log("Error verifying user");
+        console.log("Error verifying user token:", e);
         socket.send(JSON.stringify({
             type: "error_message",
-            content: "Error verifying user",
+            content: "Session expired or invalid. Please sign in again.",
         }));
         socket.close();
         return;

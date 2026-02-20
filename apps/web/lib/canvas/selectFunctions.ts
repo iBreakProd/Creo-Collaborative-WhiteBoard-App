@@ -486,14 +486,19 @@ export const isWithinDraw: (
       if (!text || !font || !fontSize) return false;
 
       ctx.font = `${fontSize}px ${font}`;
-      const textWidth = ctx.measureText(text).width;
+      const lines = text.split("\n");
+      const maxTextWidth = Math.max(...lines.map(line => ctx.measureText(line).width), 0);
       const textHeight = parseInt(fontSize);
+      const lineHeight = textHeight * 1.2;
+      
+      const topY = draw.startY! - textHeight;
+      const bottomY = draw.startY! + (lines.length - 1) * lineHeight;
 
       return (
         mouseX >= draw.startX! &&
-        mouseX <= draw.startX! + textWidth &&
-        mouseY <= draw.startY! &&
-        mouseY >= draw.startY! - textHeight
+        mouseX <= draw.startX! + maxTextWidth &&
+        mouseY >= topY &&
+        mouseY <= bottomY
       );
     }
     default: {

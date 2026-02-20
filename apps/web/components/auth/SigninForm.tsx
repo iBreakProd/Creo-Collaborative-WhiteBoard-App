@@ -20,6 +20,7 @@ import { redirect } from "next/navigation";
 import { RequestCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { setUser } from "@/lib/features/meetdraw/appSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux";
+import { toast } from "@workspace/ui/components/sonner";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -69,6 +70,12 @@ export default function SigninForm({
       redirect("/home");
     }
   }, [userState]);
+
+  useEffect(() => {
+    if (state.message) {
+      toast.error(state.message);
+    }
+  }, [state.message]);
 
   return (
     <Card className="w-full max-w-sm rounded-lg z-2 font-cabinet-grotesk tracking-wide">

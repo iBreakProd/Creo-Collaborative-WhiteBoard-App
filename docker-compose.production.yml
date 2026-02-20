@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  web:
+    image: ${DOCKERHUB_IMAGE_PREFIX}-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "4000:3000"
+    environment:
+      - NODE_ENV=production
+      - API_URL=${API_URL}
+      - WS_URL=${WS_URL}
+      - BROWSER_URL=${BROWSER_URL}
+    networks:
+      - creo_network
+
+  http-server:
+    image: ${DOCKERHUB_IMAGE_PREFIX}-http-server:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=4001
+      - FRONTEND_URL=${FRONTEND_URL}
+    networks:
+      - creo_network
+
+  ws-server:
+    image: ${DOCKERHUB_IMAGE_PREFIX}-ws-server:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "4002:4002"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=4002
+    networks:
+      - creo_network
+
+networks:
+  creo_network:
+    driver: bridge

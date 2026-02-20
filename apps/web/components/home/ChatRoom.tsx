@@ -109,6 +109,22 @@ const ChatRoom = ({ jwtCookie }: { jwtCookie: RequestCookie }) => {
     };
   }, [messages]);
 
+  useEffect(() => {
+    if (chatDivRef.current && !isLoadingMore) {
+      const { scrollTop, scrollHeight, clientHeight } = chatDivRef.current;
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
+
+      if (isNearBottom) {
+        chatDivRef.current.scrollTo({
+          top: chatDivRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      } else {
+        setShowBadge(true);
+      }
+    }
+  }, [messages, isLoadingMore]);
+
   if (!userState) {
     toast.error("Please sign in to chat", {
       description: "You must be signed in to chat",
@@ -177,7 +193,18 @@ const ChatRoom = ({ jwtCookie }: { jwtCookie: RequestCookie }) => {
       }
 
       socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        if (event.data === "pong") {
+          console.log("WS Client: Heartbeat 'pong' received");
+          return;
+        }
+
+        let data;
+        try {
+          data = JSON.parse(event.data);
+        } catch (e) {
+          console.error("WS Client: Failed to parse message", event.data, e);
+          return;
+        }
 
         switch (data.type) {
           case "connection_ready":

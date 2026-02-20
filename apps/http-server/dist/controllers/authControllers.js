@@ -23,6 +23,7 @@ const common_1 = require("@workspace/common");
 const drizzle_orm_1 = require("drizzle-orm");
 function signupController(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c, _d, _e, _f;
         const inputValidator = common_1.UserSignupSchema;
         const validatedInput = inputValidator.safeParse(req.body);
         if (validatedInput.error) {
@@ -40,10 +41,10 @@ function signupController(req, res) {
                 name: validatedInput.data.name,
             }).returning();
             const user = {
-                id: userCreated[0].id,
-                username: userCreated[0].username,
-                name: userCreated[0].name,
-                photo: userCreated[0].photo,
+                id: (_a = userCreated[0]) === null || _a === void 0 ? void 0 : _a.id,
+                username: (_b = userCreated[0]) === null || _b === void 0 ? void 0 : _b.username,
+                name: (_c = userCreated[0]) === null || _c === void 0 ? void 0 : _c.name,
+                photo: (_d = userCreated[0]) === null || _d === void 0 ? void 0 : _d.photo,
             };
             const token = jsonwebtoken_1.default.sign(user, process.env.JWT_SECRET || "kjhytfrde45678iuytrfdcfgy6tr");
             res.cookie("jwt", token, {
@@ -59,14 +60,16 @@ function signupController(req, res) {
         }
         catch (e) {
             console.log(e);
-            const code = e.code;
-            if (code === "23505") { // Postgres unique constraint violation code
-                res.status(401).json({
-                    message: "Username already exists",
+            // Drizzle wraps Postgres errors, so the actual code is usually in e.cause
+            const dbError = e.cause || e;
+            if (dbError.code === "23505" || ((_e = e.message) === null || _e === void 0 ? void 0 : _e.includes("23505")) || ((_f = dbError.message) === null || _f === void 0 ? void 0 : _f.includes("duplicate key value violates unique constraint"))) {
+                res.status(409).json({
+                    message: "Username is already taken. Please choose another one.",
                 });
+                return;
             }
-            res.status(401).json({
-                message: "Error faced while creating user, try again",
+            res.status(500).json({
+                message: "Unable to create your account right now. Please try again.",
             });
         }
     });
@@ -117,8 +120,8 @@ function signinController(req, res) {
         }
         catch (e) {
             console.log(e);
-            res.status(401).json({
-                message: "Error faced while loging user in, try again",
+            res.status(500).json({
+                message: "Unable to sign you in at the moment. Please try again later.",
             });
         }
     });
@@ -155,8 +158,8 @@ function infoController(req, res) {
         }
         catch (e) {
             console.log(e);
-            res.status(401).json({
-                message: "Error faced while getting user info, try again",
+            res.status(500).json({
+                message: "Unable to retrieve your profile information. Please refresh.",
             });
         }
     });

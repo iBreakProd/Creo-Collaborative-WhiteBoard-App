@@ -8,7 +8,7 @@ import {
   MessageSquare,
   Share2,
   Users,
-  Mail,
+  Globe,
 } from "lucide-react";
 import { RxArrowTopRight } from "react-icons/rx";
 import { TbBeta } from "react-icons/tb";
@@ -27,7 +27,7 @@ export default function Page() {
         <h1 className="text-white/90 text-4xl font-bold font-pencerio absolute top-4 left-4">
           meetdraw
         </h1>
-        <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
+        <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
         <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-green-500/80 rounded-full blur-[200px] -translate-x-1/2 -translate-y-1/2" />
         <div className="relative z-10 flex flex-col items-center">
           <h1 className="text-5xl md:text-7xl font-bold font-cabinet-grotesk bg-clip-text tracking-tight text-transparent bg-gradient-to-b from-neutral-50 to-neutral-700 py-1">
@@ -63,53 +63,60 @@ export default function Page() {
         </div>
       </section>
 
-      <section id="features" className="py-16 md:py-24 px-4">
+      <section id="features" className="py-24 md:py-32 px-4 relative">
         <div className="container mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 ">
-            Everything you need to collaborate
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="flex flex-col items-center justify-center mb-16 md:mb-20">
+            <h2 className="text-3xl md:text-5xl font-bold text-center tracking-tight font-cabinet-grotesk text-white">
+              Everything you need to collaborate
+            </h2>
+            <div className="w-20 h-1 bg-green-500/50 mt-8 rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-12 gap-x-8 md:gap-x-12">
             {[
               {
-                icon: <Feather size={24} />,
+                icon: <Feather size={28} />,
                 title: "Real-time Drawing",
                 desc: "Collaborative canvas with live feedback.",
               },
               {
-                icon: <MessageSquare size={24} />,
+                icon: <MessageSquare size={28} />,
                 title: "Instant Chat",
                 desc: "Built-in messaging while you work.",
               },
               {
-                icon: <Share2 size={24} />,
+                icon: <Share2 size={28} />,
                 title: "Share & Join",
                 desc: "One-click room sharing with anyone.",
               },
               {
-                icon: <Users size={24} />,
+                icon: <Users size={28} />,
                 title: "Any Browser",
-                desc: "Works seamlessly on chrome, safari, edge.",
+                desc: "Works seamlessly on Chrome, Safari, and Edge.",
               },
               {
-                icon: <Code size={24} />,
+                icon: <Code size={28} />,
                 title: "Lightning Fast",
                 desc: "No lag, instant synchronization.",
               },
               {
-                icon: <TbBeta size={24} />,
+                icon: <TbBeta size={28} />,
                 title: "Coming Soon",
                 desc: "Voice & video calls.",
               },
             ].map((feature, i) => (
               <div
                 key={i}
-                className="bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-lg"
+                className="group flex flex-col items-start p-6 rounded-2xl transition-all duration-300 hover:bg-white/5 border border-transparent hover:border-white/10"
               >
-                <div className="text-green-400 mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-bold mb-2 font-cabinet-grotesk tracking-wider">
+                <div className="text-green-500/80 mb-6 p-3 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 group-hover:text-green-400 transition-colors">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold mb-3 font-cabinet-grotesk tracking-wide text-neutral-200 group-hover:text-white transition-colors">
                   {feature.title}
                 </h3>
-                <p className="text-neutral-400">{feature.desc}</p>
+                <p className="text-neutral-400 leading-relaxed text-sm md:text-base">
+                  {feature.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -117,68 +124,76 @@ export default function Page() {
       </section>
       <section
         id="how-it-works"
-        className="py-16 md:py-24 px-4 overflow-clip relative"
+        className="py-24 md:py-32 px-4 relative"
       >
-        <div className="mx-auto text-center bg-white/5 p-8 rounded-xl backdrop-blur-[2px] border border-neutral-500/20">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12">How It Works</h2>
-          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-            <div className="absolute top-[90px] left-0 w-full h-px bg-white/10 -translate-y-1/2 hidden md:block"></div>
-            <div className="flex flex-col items-center p-4">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 border border-green-500 flex items-center justify-center text-2xl font-bold mb-4 z-10">
+        <div className="container mx-auto">
+          <div className="flex flex-col items-center justify-center mb-16 md:mb-20">
+            <h2 className="text-3xl md:text-5xl font-bold text-center tracking-tight font-cabinet-grotesk text-white">
+              How It Works
+            </h2>
+            <div className="w-20 h-1 bg-green-500/50 mt-8 rounded-full" />
+          </div>
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16 max-w-5xl mx-auto">
+            <div className="absolute top-[32px] left-[15%] w-[70%] h-px bg-gradient-to-r from-transparent via-green-500/30 to-transparent hidden md:block"></div>
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 rounded-full bg-neutral-900 border border-green-500/30 flex items-center justify-center text-2xl font-bold font-cabinet-grotesk mb-6 z-10 text-green-400 group-hover:border-green-400 group-hover:bg-green-500/10 transition-all duration-300 shadow-[0_0_30px_-5px_rgba(34,197,94,0.1)]">
                 1
               </div>
-              <h3 className="text-xl font-bold mb-2">Create or Join</h3>
-              <p className="text-neutral-400">
-                Start a new board or enter a room code.
+              <h3 className="text-2xl font-bold mb-3 font-cabinet-grotesk text-neutral-200">Create or Join</h3>
+              <p className="text-neutral-400 leading-relaxed max-w-[250px]">
+                Start a new board or enter a room code instantly.
               </p>
             </div>
-            <div className="flex flex-col items-center p-4">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 border border-green-500 flex items-center justify-center text-2xl font-bold mb-4 z-10">
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 rounded-full bg-neutral-900 border border-green-500/30 flex items-center justify-center text-2xl font-bold font-cabinet-grotesk mb-6 z-10 text-green-400 group-hover:border-green-400 group-hover:bg-green-500/10 transition-all duration-300 shadow-[0_0_30px_-5px_rgba(34,197,94,0.1)]">
                 2
               </div>
-              <h3 className="text-xl font-bold mb-2">Draw & Chat</h3>
-              <p className="text-neutral-400">
-                Collaborate with real-time tools and messaging.
+              <h3 className="text-2xl font-bold mb-3 font-cabinet-grotesk text-neutral-200">Draw & Chat</h3>
+              <p className="text-neutral-400 leading-relaxed max-w-[250px]">
+                Collaborate with real-time tools and fluid messaging.
               </p>
             </div>
-            <div className="flex flex-col items-center p-4">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 border border-green-500 flex items-center justify-center text-2xl font-bold mb-4 z-10">
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-16 h-16 rounded-full bg-neutral-900 border border-green-500/30 flex items-center justify-center text-2xl font-bold font-cabinet-grotesk mb-6 z-10 text-green-400 group-hover:border-green-400 group-hover:bg-green-500/10 transition-all duration-300 shadow-[0_0_30px_-5px_rgba(34,197,94,0.1)]">
                 3
               </div>
-              <h3 className="text-xl font-bold mb-2">Share Ideas</h3>
-              <p className="text-neutral-400">
-                Save and continue your session later.
+              <h3 className="text-2xl font-bold mb-3 font-cabinet-grotesk text-neutral-200">Share Ideas</h3>
+              <p className="text-neutral-400 leading-relaxed max-w-[250px]">
+                Save and securely continue your session later.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="use-cases" className="py-16 md:py-24 px-4">
+      <section id="use-cases" className="py-24 md:py-32 px-4 relative">
         <div className="container mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            Perfect For...
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            <div className="bg-white/5 border border-white/10 rounded-xl p-8 backdrop-blur-lg">
-              <h3 className="text-2xl font-bold mb-4">Remote Teams</h3>
-              <p className="text-neutral-400">
+          <div className="flex flex-col items-center justify-center mb-16 md:mb-20">
+            <h2 className="text-3xl md:text-5xl font-bold text-center tracking-tight font-cabinet-grotesk text-white">
+              Perfect For...
+            </h2>
+            <div className="w-20 h-1 bg-green-500/50 mt-8 rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-x-16">
+            <div className="flex flex-col border-l-2 border-green-500/20 pl-8 hover:border-green-500/50 transition-colors duration-300">
+              <h3 className="text-2xl font-bold mb-4 font-cabinet-grotesk text-neutral-200">Remote Teams</h3>
+              <p className="text-neutral-400 leading-relaxed">
                 Daily standups, sprint planning, and brainstorming sessions that
-                feel like you're in the same room.
+                feel like you're in the exact same room.
               </p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-8 backdrop-blur-lg">
-              <h3 className="text-2xl font-bold mb-4">Education</h3>
-              <p className="text-neutral-400">
+            <div className="flex flex-col border-l-2 border-blue-500/20 pl-8 hover:border-blue-500/50 transition-colors duration-300">
+              <h3 className="text-2xl font-bold mb-4 font-cabinet-grotesk text-neutral-200">Education</h3>
+              <p className="text-neutral-400 leading-relaxed">
                 Interactive lessons, student collaboration, and visual learning
-                that engages the entire classroom.
+                that visually engages the entire classroom.
               </p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-8 backdrop-blur-lg">
-              <h3 className="text-2xl font-bold mb-4">Creative Work</h3>
-              <p className="text-neutral-400">
+            <div className="flex flex-col border-l-2 border-purple-500/20 pl-8 hover:border-purple-500/50 transition-colors duration-300">
+              <h3 className="text-2xl font-bold mb-4 font-cabinet-grotesk text-neutral-200">Creative Work</h3>
+              <p className="text-neutral-400 leading-relaxed">
                 Design reviews, wireframing, and creative workshops where ideas
-                can flow freely and visually.
+                can flow freely across the canvas.
               </p>
             </div>
           </div>
@@ -199,7 +214,7 @@ export default function Page() {
             </div>
             <div className="hover:scale-110 transition-all duration-300">
               <a
-                href="https://www.linkedin.com/in/harshit-breaks-prod/"
+                href="https://www.linkedin.com/in/ibreakprod"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
@@ -209,15 +224,17 @@ export default function Page() {
             </div>
             <div className="hover:scale-110 transition-all duration-300">
               <a
-                href="mailto:g1harshit7@gmail.com"
+                href="https://hrsht.me"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
               >
-                <Mail className="w-6 h-6 md:w-7 md:h-7" />
+                <Globe className="w-6 h-6 md:w-7 md:h-7" />
               </a>
             </div>
             <div className="hover:scale-110 transition-all duration-300">
               <a
-                href="https://github.com/HarshitBreaksProd"
+                href="https://github.com/ibreakprod"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
@@ -227,7 +244,7 @@ export default function Page() {
             </div>
             <div className="hover:scale-110 transition-all duration-300">
               <a
-                href="https://github.com/HarshitBreaksProd/meetdraw"
+                href="http://github.com/iBreakProd/creo"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-neutral-400 hover:text-white transition-colors cursor-pointer"

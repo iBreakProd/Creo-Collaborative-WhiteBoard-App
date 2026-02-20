@@ -588,14 +588,18 @@ export function handleShapeSelectionBox(
       };
     case "text":
       ctx.font = `${draw.fontSize}px ${draw.font}`;
-      const endX = draw.startX! + ctx!.measureText(draw.text!).width;
+      const lines = (draw.text || "").split("\n");
+      const maxTextWidth = Math.max(...lines.map(line => ctx.measureText(line).width), 0);
+      const lineHeight = parseInt(draw.fontSize!) * 1.2;
+      const endX = draw.startX! + maxTextWidth;
       const endY = draw.startY! - parseInt(draw.fontSize!);
+      const bottomY = draw.startY! + (lines.length - 1) * lineHeight;
       return {
         ...draw,
         id: "1",
         shape: "rectangle",
         startX: draw.startX! - 10,
-        startY: draw.startY! + 10,
+        startY: bottomY + 10,
         endX: endX + 10,
         endY: endY - 10,
         fillStyle: "transparent",

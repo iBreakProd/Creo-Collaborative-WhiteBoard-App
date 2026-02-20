@@ -28,6 +28,13 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
   userVerificationStatus.set(socket, { verified: false });
 
   socket.on("message", async (data) => {
+    const dataString = data.toString();
+    if (dataString === "ping") {
+      console.log(`[WS Server] Heartbeat 'ping' received from User: ${userVerificationStatus.get(socket)?.userId || 'unverified'}`);
+      socket.send("pong");
+      return;
+    }
+
     const userStatus = userVerificationStatus.get(socket);
 
     if (!userStatus?.verified) {
@@ -231,6 +238,8 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
   });
 
   socket.on("close", () => {
+    const status = userVerificationStatus.get(socket);
+    console.log(`[WS Server] Connection closed for User: ${status?.userId || 'unverified'}`);
     userVerificationStatus.delete(socket);
     for (const [roomId, connections] of activeRooms.entries()) {
       const updatedConnections = connections.filter(
@@ -262,12 +271,14 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
       process.env.JWT_SECRET || "kjhytfrde45678iuytrfdcfgy6tr"
     ) as JwtPayload;
 
-    if (!verified?.id) {
-      console.log("User not authorised");
+    // Prevent DrizzleQueryError: valid UUID check
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(verified.id)) {
+      console.log("Invalid User ID format");
       socket.send(
         JSON.stringify({
           type: "error_message",
-          content: "User not authorised",
+          content: "Corrupted authentication token. Please sign in again.",
         })
       );
       socket.close();
@@ -282,7 +293,7 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
       socket.send(
         JSON.stringify({
           type: "error_message",
-          content: "User does not exist",
+          content: "Your account could not be completely verified. Please sign in again.",
         })
       );
       socket.close();
@@ -290,6 +301,7 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
     }
 
     userVerificationStatus.set(socket, { verified: true, userId: verified.id });
+    console.log(`[WS Server] Connection verified and ready for User: ${verified.id}`);
     socket.send(
       JSON.stringify({
         type: "connection_ready",
@@ -297,12 +309,11 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
       })
     );
   } catch (e) {
-    console.log(e);
-    console.log("Error verifying user");
+    console.log("Error verifying user token:", e);
     socket.send(
       JSON.stringify({
         type: "error_message",
-        content: "Error verifying user",
+        content: "Session expired or invalid. Please sign in again.",
       })
     );
     socket.close();

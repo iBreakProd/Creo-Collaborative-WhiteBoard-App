@@ -19,13 +19,21 @@ export const useWebSocket = (url: string) => {
 
     const ws = new WebSocket(url);
 
+    let pingInterval: NodeJS.Timeout;
+
     ws.onopen = () => {
       setIsLoading(false);
       setIsError(false);
       setSocket(ws);
+      pingInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send("ping");
+        }
+      }, 30000); // 30 seconds heartbeat
     };
 
     ws.onclose = (event) => {
+      if (pingInterval) clearInterval(pingInterval);
       setSocket(null);
       if (!event.wasClean) {
         setIsError(true);
@@ -34,12 +42,14 @@ export const useWebSocket = (url: string) => {
     };
 
     ws.onerror = (error) => {
+      if (pingInterval) clearInterval(pingInterval);
       setIsError(true);
       setIsLoading(false);
       setSocket(null);
     };
 
     return () => {
+      if (pingInterval) clearInterval(pingInterval);
       if (
         ws.readyState === WebSocket.OPEN ||
         ws.readyState === WebSocket.CONNECTING

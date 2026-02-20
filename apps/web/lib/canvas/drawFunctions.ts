@@ -26,6 +26,7 @@ export const renderDraws = (
   ctx.scale(scale, scale);
 
   diagrams.forEach((diagram) => {
+    ctx.save();
     if (diagram.strokeStyle) {
       ctx.strokeStyle = diagram.strokeStyle;
     }
@@ -36,10 +37,7 @@ export const renderDraws = (
       ctx.lineWidth = diagram.lineWidth;
     }
     if (toErase?.includes(diagram)) {
-      ctx.strokeStyle = (ctx.strokeStyle as string).concat("20");
-      if (diagram.shape === "text") {
-        diagram.strokeStyle = ctx.strokeStyle;
-      }
+      ctx.globalAlpha = 0.2;
     }
     switch (diagram.shape) {
       case "rectangle":
@@ -64,6 +62,7 @@ export const renderDraws = (
         renderText(ctx, diagram);
         break;
     }
+    ctx.restore();
   });
   if (activeDraw) {
     if (activeDraw.strokeStyle) {
@@ -285,14 +284,21 @@ function renderFreeHand(ctx: CanvasRenderingContext2D, diagram: Draw) {
 function renderText(ctx: CanvasRenderingContext2D, diagram: Draw) {
   ctx.font = `${diagram.fontSize!}px ${diagram.font!}`;
   ctx.fillStyle = diagram.strokeStyle!;
-  ctx.fillText(diagram.text!, diagram.startX!, diagram.startY!);
+  const lines = (diagram.text || "").split("\n");
+  const lineHeight = parseInt(diagram.fontSize!) * 1.2;
+  lines.forEach((line, index) => {
+    ctx.fillText(line, diagram.startX!, diagram.startY! + index * lineHeight);
+  });
 }
 
 function renderCursor(ctx: CanvasRenderingContext2D, diagram: Draw) {
   ctx.font = `${diagram.fontSize!}px ${diagram.font!}`;
-  const textWidth = ctx.measureText(diagram.text!).width;
+  const lines = (diagram.text || "").split("\n");
+  const lastLine = lines[lines.length - 1] || "";
+  const textWidth = ctx.measureText(lastLine).width;
+  const lineHeight = parseInt(diagram.fontSize!) * 1.2;
   const cursorX = diagram.startX! + textWidth;
-  const cursorY = diagram.startY!;
+  const cursorY = diagram.startY! + (lines.length - 1) * lineHeight;
 
   if (Math.floor(Date.now() / 600) % 2) {
     ctx.beginPath();

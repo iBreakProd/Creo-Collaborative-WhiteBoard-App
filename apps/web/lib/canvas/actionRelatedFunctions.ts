@@ -2,10 +2,11 @@ import { Action, Draw } from "@/types";
 
 const broadcastAction = (
   action: Action,
-  socket: WebSocket,
+  socket: WebSocket | null,
   userId: string,
   roomId: string
 ) => {
+  if (!socket) return;
   socket.send(
     JSON.stringify({
       type: "draw",
@@ -16,16 +17,19 @@ const broadcastAction = (
   );
 };
 
+
 export const pushToUndoRedoArray = (
   action: Action,
   undoRedoArray: Action[],
   undoRedoIndex: number,
-  socket: WebSocket,
+  socket: WebSocket | null,
   userId: string,
   roomId: string
 ) => {
+
   if (undoRedoArray.length === 50) {
     undoRedoArray.shift();
+    undoRedoIndex--;
   }
   if (undoRedoIndex < undoRedoArray.length - 1) {
     undoRedoArray.splice(
@@ -45,10 +49,11 @@ export const performUndo = (
   undoRedoArray: Action[],
   undoRedoIndex: number,
   diagrams: Draw[],
-  socket: WebSocket,
+  socket: WebSocket | null,
   userId: string,
   roomId: string
 ): { diagrams: Draw[]; undoRedoIndex: number; undoRedoArray: Action[] } => {
+
   const action = undoRedoArray[undoRedoIndex];
 
   let undoAction: Action;
@@ -104,10 +109,11 @@ export const performRedo = (
   undoRedoArray: Action[],
   undoRedoIndex: number,
   diagrams: Draw[],
-  socket: WebSocket,
+  socket: WebSocket | null,
   userId: string,
   roomId: string
 ): { diagrams: Draw[]; undoRedoIndex: number; undoRedoArray: Action[] } => {
+
   if (undoRedoIndex === undoRedoArray.length - 1) {
     return { diagrams, undoRedoIndex, undoRedoArray };
   }

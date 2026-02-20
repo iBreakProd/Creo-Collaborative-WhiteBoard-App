@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "exports": {
-    "./client": "./index.ts"
+    "./client": "./src/index.ts"
   },
   "scripts": {
     "db:generate": "drizzle-kit generate",

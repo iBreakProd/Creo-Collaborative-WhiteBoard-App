@@ -1,0 +1,117 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run migrations
+        run: pnpm --filter @workspace/db db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Docker login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push WEB to DockerHub
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/creo-web:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/creo-web:latest
+
+      - name: Build and push HTTP SERVER to DockerHub
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./apps/http-server/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/creo-http-server:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/creo-http-server:latest
+
+      - name: Build and push WS SERVER to DockerHub
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./apps/ws-server/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/creo-ws-server:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/creo-ws-server:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create app directory on VM
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: mkdir -p ~/creo
+
+      - name: Copy docker-compose to vm
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.production.yml"
+          target: "~/creo/"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/creo
+            echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+            cat <<EOF > .env.creo.production
+            DOCKERHUB_IMAGE_PREFIX=${{ secrets.DOCKERHUB_USERNAME }}/creo
+            IMAGE_TAG=${{ github.sha }}
+            NODE_ENV=production
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            API_URL=${{ secrets.API_URL }}
+            WS_URL=${{ secrets.WS_URL }}
+            BROWSER_URL=${{ secrets.BROWSER_URL }}
+            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            EOF
+
+            docker compose -f docker-compose.production.yml pull
+            docker compose -f docker-compose.production.yml --env-file .env.creo.production up -d
