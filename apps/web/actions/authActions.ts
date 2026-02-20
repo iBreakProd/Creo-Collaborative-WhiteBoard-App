@@ -51,12 +51,10 @@ export async function signupAction(
       },
       message: "User created successfully.",
     };
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
-    console.log((error as any).response);
-    console.log((error as any).response.data);
-    if ((error as any).response.data.message) {
-      return { message: (error as any).response.data.message };
+    if (error?.response?.data?.message) {
+      return { message: error.response.data.message };
     }
     return { message: "Could not create user." };
   }
@@ -95,12 +93,10 @@ export async function signinAction(
       },
       message: "User logged in successfully.",
     };
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
-    console.log((error as any).response);
-    console.log((error as any).response.data);
-    if ((error as any).response.data.message) {
-      return { message: (error as any).response.data.message };
+    if (error?.response?.data?.message) {
+      return { message: error.response.data.message };
     }
     return { message: "Could not login user." };
   }
