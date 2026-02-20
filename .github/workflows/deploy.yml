@@ -26,23 +26,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run migrations
-        run: |
-          n=0
-          until [ "$n" -ge 5 ]
-          do
-             pnpm --filter @workspace/db db:migrate && break
-             n=$((n+1))
-             echo "Database might be in recovery mode. Waiting 15 seconds before retrying..."
-             sleep 15
-          done
-          if [ "$n" -ge 5 ]; then
-            echo "Migration failed after 5 attempts."
-            exit 1
-          fi
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
       - name: Docker login
         uses: docker/login-action@v2
         with:
