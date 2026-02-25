@@ -3,9 +3,13 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux";
 import { toast } from "@workspace/ui/components/sonner";
 import { setHomeView } from "@/lib/features/meetdraw/appSlice";
 import { useWebSocket } from "@/lib/hooks/websocket";
-import { RequestCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { useEffect, useRef, useState } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+
+interface RequestCookie {
+  name: string;
+  value: string;
+}
 import { Button } from "@workspace/ui/components/button";
 import { IoSend } from "react-icons/io5";
 import { WebSocketMessage } from "@workspace/common";
@@ -31,6 +35,7 @@ const ChatRoom = ({ jwtCookie }: { jwtCookie: RequestCookie }) => {
   const userState = useAppSelector((state) => state.app.user);
   const [serverReady, setServerReady] = useState(false);
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [messages, setMessages] = useState<Message[]>();
   const chatDivRef = useRef<HTMLDivElement>(null);
@@ -129,7 +134,8 @@ const ChatRoom = ({ jwtCookie }: { jwtCookie: RequestCookie }) => {
     toast.error("Please sign in to chat", {
       description: "You must be signed in to chat",
     });
-    redirect("/signin");
+    router.replace("/signin");
+    return null;
   }
 
   if (!activeRoom) {

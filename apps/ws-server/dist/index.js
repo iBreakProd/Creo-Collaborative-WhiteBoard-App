@@ -62,6 +62,18 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
                 break;
             case "disconnect_room":
                 for (const [roomId, connections] of activeRooms.entries()) {
+                    const isMember = connections.some((conn) => conn.socket === socket);
+                    if (isMember) {
+                        connections.forEach((member) => {
+                            if (member.socket !== socket) {
+                                member.socket.send(JSON.stringify({
+                                    type: "disconnect_room",
+                                    userId: validMessage.data.userId,
+                                    roomId: roomId,
+                                }));
+                            }
+                        });
+                    }
                     const updatedConnections = connections.filter((conn) => conn.socket !== socket);
                     if (updatedConnections.length === 0) {
                         activeRooms.delete(roomId);
@@ -194,6 +206,28 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
                 }
                 break;
             }
+            case "cursor": {
+                const socketList = activeRooms.get(validMessage.data.roomId);
+                if (!(socketList === null || socketList === void 0 ? void 0 : socketList.some((conn) => conn.userId === validMessage.data.userId && conn.socket === socket))) {
+                    socket.send(JSON.stringify({
+                        type: "error_message",
+                        content: "Not connected to the room",
+                    }));
+                    return;
+                }
+                // Broadcast cursor position purely to other users in the room
+                socketList === null || socketList === void 0 ? void 0 : socketList.forEach((member) => {
+                    if (member.socket !== socket) {
+                        member.socket.send(JSON.stringify({
+                            type: "cursor",
+                            userId: validMessage.data.userId,
+                            roomId: validMessage.data.roomId,
+                            content: validMessage.data.content,
+                        }));
+                    }
+                });
+                break;
+            }
         }
     }));
     socket.on("close", () => {
@@ -201,6 +235,18 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
         console.log(`[WS Server] Connection closed for User: ${(status === null || status === void 0 ? void 0 : status.userId) || 'unverified'}`);
         userVerificationStatus.delete(socket);
         for (const [roomId, connections] of activeRooms.entries()) {
+            const isMember = connections.some((conn) => conn.socket === socket);
+            if (isMember && (status === null || status === void 0 ? void 0 : status.userId)) {
+                connections.forEach((member) => {
+                    if (member.socket !== socket) {
+                        member.socket.send(JSON.stringify({
+                            type: "disconnect_room",
+                            userId: status.userId,
+                            roomId: roomId,
+                        }));
+                    }
+                });
+            }
             const updatedConnections = connections.filter((conn) => conn.socket !== socket);
             if (updatedConnections.length === 0) {
                 activeRooms.delete(roomId);

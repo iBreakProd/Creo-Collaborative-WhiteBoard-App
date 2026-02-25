@@ -5,12 +5,13 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Room } from "@/types";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { renderDraws } from "@/lib/canvas/drawFunctions";
 
 const MeetdrawCard = ({ room }: { room: Room }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (canvasRef.current && room.Draw) {
@@ -130,7 +131,7 @@ const MeetdrawCard = ({ room }: { room: Room }) => {
 
   return (
     <Card
-      onClick={() => redirect(`/canvas/${room.id}`)}
+      onClick={() => router.push(`/canvas/${room.id}`)}
       className="block py-4 row-span-1 overflow-clip border cursor-pointer backdrop-blur-md bg-black/25 hover:-translate-y-[3px] transition-all duration-200 h-fit min-h-0"
     >
       <CardHeader className="flex items-center justify-between">

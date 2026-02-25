@@ -8,7 +8,7 @@ import {
 } from "@workspace/ui/components/card";
 import { GiAlienFire, GiJetFighter } from "react-icons/gi";
 import { useAppSelector } from "@/lib/hooks/redux";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { BiChevronDown, BiLogOut } from "react-icons/bi";
 import { signoutAction } from "@/actions/authActions";
 import { useEffect } from "react";
@@ -16,6 +16,7 @@ import { useEffect } from "react";
 const UserCard = () => {
   let user = useAppSelector((state) => state.app.user);
   const rooms = useAppSelector((state) => state.app.rooms);
+  const router = useRouter();
 
   useEffect(() => {
     if (!user) {
@@ -43,7 +44,7 @@ const UserCard = () => {
             className="cursor-pointer text-red-400 hover:text-red-500 transition-colors p-1"
             onClick={() => {
               signoutAction();
-              redirect("/signin");
+              router.replace("/signin");
             }}
             title="Sign Out"
           >

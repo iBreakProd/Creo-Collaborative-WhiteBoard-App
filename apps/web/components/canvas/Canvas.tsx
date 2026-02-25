@@ -52,7 +52,7 @@ import { TbZoom } from "react-icons/tb";
 import { GrRedo, GrUndo } from "react-icons/gr";
 import { AiOutlineHome } from "react-icons/ai";
 import { BiCopy } from "react-icons/bi";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux";
 import { setUser, setActiveRoom } from "@/lib/features/meetdraw/appSlice";
 import { useWebSocket } from "@/lib/hooks/websocket";
@@ -84,6 +84,7 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
   const [showChatBar, setShowChatBar] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
   const { socket, isLoading, isError } = useWebSocket(
     `${process.env.NEXT_PUBLIC_WS_URL}?token=${token}`
   );
@@ -178,7 +179,7 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
 
   useEffect(() => {
     if (!token) {
-      redirect("/signin");
+      router.replace("/signin");
     }
 
     if (!user) {
@@ -1580,7 +1581,7 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
                 className={`bg-transparent relative p-2 hover:bg-green-600/20 cursor-pointer`}
                 onClick={() => {
                   closeSocket();
-                  redirect("/home");
+                  router.replace("/home");
                 }}
               >
                 <AiOutlineHome className="text-white" size="18" />

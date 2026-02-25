@@ -8,9 +8,13 @@ import { useEffect, useRef, useState } from "react";
 import StateButton from "./StateButton";
 import CreateRoomView from "./CreateRoomView";
 import JoinRoomView from "./JoinRoomView";
-import { RequestCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+
+interface RequestCookie {
+  name: string;
+  value: string;
+}
 import {
   setHomeView,
   setRooms,
@@ -32,10 +36,11 @@ const MainPage = ({
 }) => {
   const userState = useAppSelector((state) => state.app.user);
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   useEffect(() => {
     if (!jwtCookie || !jwtCookie.value) {
-      redirect("/signin");
+      router.replace("/signin");
     }
     if (!userState) {
       const user = JSON.parse(sessionStorage.getItem("user")!);

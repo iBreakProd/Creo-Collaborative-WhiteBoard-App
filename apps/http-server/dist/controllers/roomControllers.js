@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createRoomController = createRoomController;
 exports.joinRoomController = joinRoomController;
 exports.fetchAllRoomsController = fetchAllRoomsController;
+exports.fetchRoomByIdController = fetchRoomByIdController;
 const client_1 = require("@workspace/db/client");
 const utils_1 = require("../utils");
 const common_1 = require("@workspace/common");
@@ -175,6 +176,36 @@ function fetchAllRoomsController(req, res) {
             res.status(500).json({
                 message: "Error fetching rooms",
             });
+        }
+    });
+}
+function fetchRoomByIdController(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const userId = req.userId;
+        const roomId = req.params.roomId;
+        if (!userId) {
+            res.status(401).json({ message: "User Id not found" });
+            return;
+        }
+        if (!roomId) {
+            res.status(400).json({ message: "Room Id required" });
+            return;
+        }
+        try {
+            const existingRooms = yield client_1.db.select().from(client_1.roomsTable).where((0, drizzle_orm_1.eq)(client_1.roomsTable.id, roomId));
+            const room = existingRooms[0];
+            if (!room) {
+                res.status(404).json({ message: "Room not found" });
+                return;
+            }
+            res.json({
+                message: "Room fetched successfully",
+                room,
+            });
+        }
+        catch (e) {
+            console.log(e);
+            res.status(500).json({ message: "Error fetching room" });
         }
     });
 }

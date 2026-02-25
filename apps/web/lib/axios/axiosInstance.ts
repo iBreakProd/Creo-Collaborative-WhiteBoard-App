@@ -2,6 +2,7 @@ import axios from "axios";
 import { cookies } from "next/headers";
 
 let url = process.env.NEXT_PUBLIC_HTTP_URL;
+console.log(url);
 
 if (url && !url.endsWith("/api/v1")) {
   url = url + "/api/v1";

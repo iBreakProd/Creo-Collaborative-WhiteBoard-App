@@ -6,12 +6,13 @@ import SubmitButton from "../common/SubmitButton";
 import { RxCross1 } from "react-icons/rx";
 import { createRoomAction } from "@/actions/roomActions";
 import { useEffect } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/hooks/redux";
 import { setHomeView } from "@/lib/features/meetdraw/appSlice";
 
 const CreateRoomView = () => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(createRoomAction, {
     message: "",
     room: undefined,
@@ -19,7 +20,7 @@ const CreateRoomView = () => {
 
   useEffect(() => {
     if (state.room) {
-      redirect(`/canvas/${state.room.id}`);
+      router.push(`/canvas/${state.room.id}`);
     }
   }, [state.room]);
 

@@ -5,12 +5,13 @@ import FormInput from "../common/FormInput";
 import SubmitButton from "../common/SubmitButton";
 import { RxCross1 } from "react-icons/rx";
 import { joinRoomAction } from "@/actions/roomActions";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { setHomeView } from "@/lib/features/meetdraw/appSlice";
 import { useAppDispatch } from "@/lib/hooks/redux";
 
 const JoinRoomView = () => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(joinRoomAction, {
     message: "",
     room: undefined,
@@ -18,7 +19,7 @@ const JoinRoomView = () => {
 
   useEffect(() => {
     if (state.room) {
-      redirect(`/canvas/${state.room.id}`);
+      router.push(`/canvas/${state.room.id}`);
     }
   }, [state.room]);
 

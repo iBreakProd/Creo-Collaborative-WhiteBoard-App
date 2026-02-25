@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@workspace/ui/components/button";
-import { redirect, RedirectType } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ReactNode } from "react";
 
 export interface LinkButtonprops {
@@ -16,9 +16,10 @@ const LinkButton = ({
   variant,
   className,
 }: LinkButtonprops) => {
+  const router = useRouter();
   return (
     <Button
-      onClick={() => redirect(href)}
+      onClick={() => router.push(href)}
       className={`overflow-clip relative p-0 cursor-pointer transition-all duration-500 hover:bg-black hover:text-white border border-black hover:border-green-600/30 ${className}`}
     >
       {variant === "ghost" ? (

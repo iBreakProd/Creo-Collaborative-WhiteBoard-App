@@ -16,8 +16,12 @@ import { signinAction } from "@/actions/authActions";
 import { useFormStatus } from "react-dom";
 import { useActionState, useEffect } from "react";
 import { BiInfoCircle } from "react-icons/bi";
-import { redirect } from "next/navigation";
-import { RequestCookie } from "next/dist/compiled/@edge-runtime/cookies";
+import { useRouter } from "next/navigation";
+
+interface RequestCookie {
+  name: string;
+  value: string;
+}
 import { setUser } from "@/lib/features/meetdraw/appSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux";
 import { toast } from "@workspace/ui/components/sonner";
@@ -47,13 +51,14 @@ export default function SigninForm({
   const [state, formAction] = useActionState(signinAction, initialState);
   const userState = useAppSelector((state) => state.app.user);
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   useEffect(() => {
     const sessionUser = sessionStorage.getItem("user");
 
     if (sessionUser && jwtCookie && jwtCookie.value) {
       dispatch(setUser(JSON.parse(sessionUser)));
-      redirect("/home");
+      router.replace("/home");
     } else if (state.user) {
       const user = {
         id: state.user.id,
@@ -67,7 +72,7 @@ export default function SigninForm({
 
   useEffect(() => {
     if (jwtCookie && jwtCookie.value && userState !== null) {
-      redirect("/home");
+      router.replace("/home");
     }
   }, [userState]);
 

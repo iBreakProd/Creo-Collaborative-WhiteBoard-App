@@ -7,4 +7,5 @@ const router = (0, express_1.Router)();
 router.route("/create").post(authenticateUser_1.authenticateUser, roomControllers_1.createRoomController);
 router.route("/join").post(authenticateUser_1.authenticateUser, roomControllers_1.joinRoomController);
 router.route("/all").get(authenticateUser_1.authenticateUser, roomControllers_1.fetchAllRoomsController);
+router.route("/:roomId").get(authenticateUser_1.authenticateUser, roomControllers_1.fetchRoomByIdController);
 exports.default = router;
