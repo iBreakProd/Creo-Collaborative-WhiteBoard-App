@@ -29,6 +29,7 @@ export const WebSocketMessageSchema = z.object({
     "disconnect_room",
     "chat_message",
     "draw",
+    "cursor",
     "error_message",
   ]),
   roomId: z.string(),

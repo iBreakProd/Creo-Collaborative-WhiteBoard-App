@@ -37,17 +37,17 @@ export declare const JoinRoomSchema: z.ZodObject<{
     joinCode: string;
 }>;
 export declare const WebSocketMessageSchema: z.ZodObject<{
-    type: z.ZodEnum<["connect_room", "disconnect_room", "chat_message", "draw", "error_message"]>;
+    type: z.ZodEnum<["connect_room", "disconnect_room", "chat_message", "draw", "cursor", "error_message"]>;
     roomId: z.ZodString;
     userId: z.ZodString;
     content: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    type: "connect_room" | "disconnect_room" | "chat_message" | "draw" | "error_message";
+    type: "connect_room" | "disconnect_room" | "chat_message" | "draw" | "cursor" | "error_message";
     roomId: string;
     userId: string;
     content?: string | undefined;
 }, {
-    type: "connect_room" | "disconnect_room" | "chat_message" | "draw" | "error_message";
+    type: "connect_room" | "disconnect_room" | "chat_message" | "draw" | "cursor" | "error_message";
     roomId: string;
     userId: string;
     content?: string | undefined;

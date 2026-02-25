@@ -51,10 +51,12 @@ import {
 import { TbZoom } from "react-icons/tb";
 import { GrRedo, GrUndo } from "react-icons/gr";
 import { AiOutlineHome } from "react-icons/ai";
+import { BiCopy } from "react-icons/bi";
 import { redirect } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux";
-import { setUser } from "@/lib/features/meetdraw/appSlice";
+import { setUser, setActiveRoom } from "@/lib/features/meetdraw/appSlice";
 import { useWebSocket } from "@/lib/hooks/websocket";
+import { fetchRoomById } from "@/actions/roomActions";
 import { toast } from "@workspace/ui/components/sonner";
 import { WebSocketMessage } from "@workspace/common";
 import ChatBar from "./ChatBar";
@@ -63,6 +65,20 @@ import {
   fetchMoreChatMessages,
 } from "@/actions/chatActions";
 import { fetchAllDraws } from "@/actions/contentActions";
+
+const CURSOR_COLORS = [
+  "#ef4444", "#f97316", "#eab308", "#84cc16", "#22c55e",
+  "#14b8a6", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6",
+  "#d946ef", "#ec4899", "#f43f5e",
+];
+
+const getCursorColor = (identifier: string) => {
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return CURSOR_COLORS[Math.abs(hash) % CURSOR_COLORS.length];
+};
 
 const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
   const [showChatBar, setShowChatBar] = useState(false);
@@ -75,6 +91,7 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.app.user);
   const room = useAppSelector((state) => state.app.activeRoom);
+  const [isFetchingRoom, setFetchingRoom] = useState<boolean>(!room);
   const [activeAction, setActiveAction] = useState<
     "select" | "move" | "draw" | "resize" | "edit" | "erase" | "pan" | "zoom"
   >("select");
@@ -110,6 +127,8 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
   const unreadMessagesRef = useRef<boolean>(false);
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] =
     useState<boolean>(false);
+  const [cursors, setCursors] = useState<Record<string, { x: number; y: number; username: string; color: string }>>({});
+  const lastCursorEmitTimeRef = useRef<number>(0);
   const activeDraw = useRef<Draw>(null);
   const selectedDraw = useRef<Draw>(null);
   const originalDrawState = useRef<Draw>(null);
@@ -178,6 +197,22 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
   }, [user, token, dispatch]);
 
   useEffect(() => {
+    const initRoom = async () => {
+      if (!room && roomId) {
+        setFetchingRoom(true);
+        const fetchedRoom = await fetchRoomById(roomId);
+        if (fetchedRoom) {
+          dispatch(setActiveRoom(fetchedRoom));
+        }
+        setFetchingRoom(false);
+      } else if (room) {
+        setFetchingRoom(false);
+      }
+    };
+    initRoom();
+  }, [room, roomId, dispatch]);
+
+  useEffect(() => {
     if (user && socket && !isLoading && !isError) {
       if (serverReady) {
         const connectMessage: WebSocketMessage = {
@@ -211,6 +246,15 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
               description: "Please try again",
             });
             break;
+          case "disconnect_room":
+            if (data.userId) {
+              setCursors((prev) => {
+                const newCursors = { ...prev };
+                delete newCursors[data.userId];
+                return newCursors;
+              });
+            }
+            break;
           case "chat_message":
             const message = JSON.parse(data.content);
             if (message.userId !== user?.id) {
@@ -224,6 +268,21 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
             }
             const action = JSON.parse(data.content);
             diagrams.current = performAction(action, diagrams.current);
+            break;
+          case "cursor":
+            if (data.userId === user?.id) {
+              return;
+            }
+            const pos = JSON.parse(data.content);
+            setCursors((prev) => ({
+              ...prev,
+              [data.userId]: {
+                x: pos.x,
+                y: pos.y,
+                username: pos.username,
+                color: getCursorColor(pos.username || data.userId),
+              },
+            }));
             break;
         }
       };
@@ -447,11 +506,13 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
 
   useEffect(() => {
     const handleShortcuts = (event: KeyboardEvent) => {
-      if (
-        activeDraw.current?.shape !== "text" &&
-        selectedDraw.current?.shape !== "text" &&
-        chatMessageInputRef.current !== document.activeElement
-      ) {
+      const isEditingChat = chatMessageInputRef.current === document.activeElement;
+      const isEditingText =
+        ((activeActionRef.current === "edit" || activeActionRef.current === "draw") &&
+        (activeDraw.current?.shape === "text" || selectedDraw.current?.shape === "text")) ||
+        isEditingChat;
+
+      if (!isEditingText) {
         switch (event.key) {
           case "1":
           case "s":
@@ -536,10 +597,13 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
     };
 
     const handleShortcutsClose = (event: KeyboardEvent) => {
-      if (
-        activeDraw.current?.shape !== "text" &&
-        selectedDraw.current?.shape !== "text"
-      ) {
+      const isEditingChat = chatMessageInputRef.current === document.activeElement;
+      const isEditingText =
+        ((activeActionRef.current === "edit" || activeActionRef.current === "draw") &&
+        (activeDraw.current?.shape === "text" || selectedDraw.current?.shape === "text")) ||
+        isEditingChat;
+
+      if (!isEditingText) {
         if (event.key === "Shift") {
           setActiveAction("select");
           return;
@@ -571,7 +635,8 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
     if (!ctx) return;
     canvasCurrent.focus();
 
-    const renderInterval = setInterval(() => {
+    let animationFrameId: number;
+    const renderLoop = () => {
       renderDraws(
         ctx,
         canvasCurrent,
@@ -584,7 +649,9 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
         panOffset.current,
         scale.current
       );
-    }, 15);
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+    animationFrameId = requestAnimationFrame(renderLoop);
 
     const getMousePosition = (event: MouseEvent) => {
       return {
@@ -804,6 +871,21 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
       }
 
       const { offsetX, offsetY } = getMousePosition(event);
+
+      // Throttled cursor emission
+      const now = Date.now();
+      if (now - lastCursorEmitTimeRef.current > 50) {
+        if (socket && serverReady) {
+          const cursorMessage: WebSocketMessage = {
+            type: "cursor",
+            roomId: roomId,
+            userId: user!.id,
+            content: JSON.stringify({ x: offsetX, y: offsetY, username: user!.name || user!.username }),
+          };
+          socket.send(JSON.stringify(cursorMessage));
+        }
+        lastCursorEmitTimeRef.current = now;
+      }
 
       if (activeActionRef.current === "select") {
         const hoveredDraw = getDrawAtPosition(
@@ -1141,6 +1223,11 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
         event.preventDefault();
 
         if (event.key === "Enter") {
+          if (event.shiftKey) {
+            textInp.current += "\n";
+            activeDraw.current!.text = textInp.current;
+            return;
+          }
           diagrams.current.push(activeDraw.current!);
           if (socket) {
             const action: Action = {
@@ -1196,6 +1283,11 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
         event.preventDefault();
 
         if (event.key === "Enter") {
+          if (event.shiftKey) {
+            textInp.current += "\n";
+            selectedDraw.current!.text = textInp.current;
+            return;
+          }
           diagrams.current.push(selectedDraw.current!);
           if (originalDrawState.current && selectedDraw.current && socket) {
             const action: Action = {
@@ -1271,7 +1363,7 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
     canvasCurrent.addEventListener("wheel", handleScroll);
 
     return () => {
-      clearInterval(renderInterval);
+      cancelAnimationFrame(animationFrameId);
       canvasCurrent.removeEventListener("mousedown", handleMouseDown);
       canvasCurrent.removeEventListener("mouseup", handleMouseUp);
       canvasCurrent.removeEventListener("mousemove", handleMouseMove);
@@ -1304,8 +1396,8 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
     if (selectedDraw.current) {
       selectedDraw.current.fillStyle = color;
       if (
-        originalDrawState.current?.fillStyle !==
-          selectedDraw.current.fillStyle &&
+        originalDrawState.current &&
+        originalDrawState.current.fillStyle !== selectedDraw.current.fillStyle &&
         socket
       ) {
         const action: Action = {
@@ -1321,14 +1413,12 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
           user!.id,
           roomId
         );
-
-        modifiedDrawState.current = null;
-        originalDrawState.current = JSON.parse(
-          JSON.stringify(selectedDraw.current)
-        );
         undoRedoArrayRef.current = undoRedoArray;
         undoRedoIndexRef.current = undoRedoIndex;
         updateUndoRedoState();
+        originalDrawState.current = JSON.parse(
+          JSON.stringify(selectedDraw.current)
+        );
       }
     }
   };
@@ -1338,7 +1428,8 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
     if (selectedDraw.current) {
       selectedDraw.current.strokeStyle = color;
       if (
-        originalDrawState.current?.strokeStyle !==
+        originalDrawState.current &&
+        originalDrawState.current.strokeStyle !==
           selectedDraw.current.strokeStyle &&
         socket
       ) {
@@ -1355,14 +1446,12 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
           user!.id,
           roomId
         );
-
-        modifiedDrawState.current = null;
-        originalDrawState.current = JSON.parse(
-          JSON.stringify(selectedDraw.current)
-        );
         undoRedoArrayRef.current = undoRedoArray;
         undoRedoIndexRef.current = undoRedoIndex;
         updateUndoRedoState();
+        originalDrawState.current = JSON.parse(
+          JSON.stringify(selectedDraw.current)
+        );
       }
     }
   };
@@ -1372,7 +1461,8 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
     if (selectedDraw.current) {
       selectedDraw.current.lineWidth = width;
       if (
-        originalDrawState.current?.lineWidth !==
+        originalDrawState.current &&
+        originalDrawState.current.lineWidth !==
           selectedDraw.current.lineWidth &&
         socket
       ) {
@@ -1389,14 +1479,12 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
           user!.id,
           roomId
         );
-
-        modifiedDrawState.current = null;
-        originalDrawState.current = JSON.parse(
-          JSON.stringify(selectedDraw.current)
-        );
         undoRedoArrayRef.current = undoRedoArray;
         undoRedoIndexRef.current = undoRedoIndex;
         updateUndoRedoState();
+        originalDrawState.current = JSON.parse(
+          JSON.stringify(selectedDraw.current)
+        );
       }
     }
   };
@@ -1406,7 +1494,8 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
     if (selectedDraw.current) {
       selectedDraw.current.font = font;
       if (
-        originalDrawState.current?.font !== selectedDraw.current.font &&
+        originalDrawState.current &&
+        originalDrawState.current.font !== selectedDraw.current.font &&
         socket
       ) {
         const action: Action = {
@@ -1422,14 +1511,12 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
           user!.id,
           roomId
         );
-
-        modifiedDrawState.current = null;
-        originalDrawState.current = JSON.parse(
-          JSON.stringify(selectedDraw.current)
-        );
         undoRedoArrayRef.current = undoRedoArray;
         undoRedoIndexRef.current = undoRedoIndex;
         updateUndoRedoState();
+        originalDrawState.current = JSON.parse(
+          JSON.stringify(selectedDraw.current)
+        );
       }
     }
   };
@@ -1439,7 +1526,8 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
     if (selectedDraw.current) {
       selectedDraw.current.fontSize = size.toString();
       if (
-        originalDrawState.current?.fontSize !== selectedDraw.current.fontSize &&
+        originalDrawState.current &&
+        originalDrawState.current.fontSize !== selectedDraw.current.fontSize &&
         socket
       ) {
         const action: Action = {
@@ -1455,14 +1543,12 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
           user!.id,
           roomId
         );
-
-        modifiedDrawState.current = null;
-        originalDrawState.current = JSON.parse(
-          JSON.stringify(selectedDraw.current)
-        );
         undoRedoArrayRef.current = undoRedoArray;
         undoRedoIndexRef.current = undoRedoIndex;
         updateUndoRedoState();
+        originalDrawState.current = JSON.parse(
+          JSON.stringify(selectedDraw.current)
+        );
       }
     }
   };
@@ -1486,18 +1572,20 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
   return (
     <TooltipProvider>
       <div className="h-screen w-screen relative">
-        <div className="fixed z-2 w-fit h-fit bg-neutral-900 rounded-md left-3 top-3">
-          <div className="bg-green-400/25 z-1 rounded-lg px-1.5 py-1 flex gap-1.5 items-center">
-            <Button
-              size="icon"
-              className={`bg-transparent relative p-2 hover:bg-green-600/20 cursor-pointer`}
-              onClick={() => {
-                closeSocket();
-                redirect("/home");
-              }}
-            >
-              <AiOutlineHome className="text-white" size="18" />
-            </Button>
+        <div className="fixed z-2 w-fit h-fit left-3 top-3 flex items-center gap-2">
+          <div className="bg-neutral-900 rounded-md">
+            <div className="bg-green-400/25 z-1 rounded-lg px-1.5 py-1 flex gap-1.5 items-center">
+              <Button
+                size="icon"
+                className={`bg-transparent relative p-2 hover:bg-green-600/20 cursor-pointer`}
+                onClick={() => {
+                  closeSocket();
+                  redirect("/home");
+                }}
+              >
+                <AiOutlineHome className="text-white" size="18" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -2213,6 +2301,23 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
           <></>
         )}
 
+        <div className={`fixed z-[2] w-fit h-fit right-3 bottom-3 flex items-center gap-2 ${showChatBar ? "hidden sm:flex sm:right-[340px]" : "flex"} transition-all duration-300`}>
+          <div className="bg-neutral-900 border border-neutral-800 rounded-md flex items-center h-[36px] px-3 py-1.5 gap-2 group cursor-pointer hover:bg-neutral-800 transition-colors shadow-sm"
+               onClick={() => {
+                 if (room?.joinCode) {
+                   navigator.clipboard.writeText(room.joinCode);
+                   toast.info("Join code copied!");
+                 }
+               }}
+          >
+            <span className="text-[11px] text-neutral-500 font-medium select-none uppercase tracking-wider hidden sm:block">Join Code</span>
+            <span className="text-sm text-neutral-300 font-mono tracking-wider">
+              {isFetchingRoom ? "•••" : (room?.joinCode || "Error")}
+            </span>
+            <BiCopy size={16} className="text-neutral-500 group-hover:text-neutral-300 transition-colors ml-1" />
+          </div>
+        </div>
+
         <div className="fixed flex gap-2 z-2 w-fit h-fit left-3 bottom-3 bg-neutral-900 rounded-md">
           <div className="bg-neutral-900 rounded-md">
             <div className="bg-green-400/25 p-1 flex items-center rounded-md">
@@ -2299,6 +2404,32 @@ const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
             className="bg-neutral-900"
           ></canvas>
         )}
+
+        {Object.entries(cursors).map(([id, pos]) => (
+          <div
+            key={id}
+            className="absolute z-10 pointer-events-none flex flex-col items-start justify-center"
+            style={{
+              left: `${pos.x * scale.current + panOffset.current.x}px`,
+              top: `${pos.y * scale.current + panOffset.current.y}px`,
+            }}
+          >
+            <PiCursorFill
+              className="drop-shadow-md"
+              size="20"
+              style={{
+                color: pos.color,
+                transform: "translate(-50%, -50%)",
+              }}
+            />
+            <div
+              className="px-2 py-0.5 mt-[-2px] ml-[10px] rounded-md text-white text-xs font-medium whitespace-nowrap drop-shadow-md"
+              style={{ backgroundColor: pos.color }}
+            >
+              {pos.username || "Anonymous"}
+            </div>
+          </div>
+        ))}
       </div>
     </TooltipProvider>
   );

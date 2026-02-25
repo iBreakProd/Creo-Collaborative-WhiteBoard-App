@@ -1,0 +1,699 @@
+--- apps/web/components/canvas/Canvas.tsx	2026-02-20 03:18:31
++++ apps/web/components/canvas/DemoCanvas.tsx	2026-02-20 15:47:03
+@@ -11,8 +11,7 @@
+   getDrawAtPosition,
+   hoverOverSelectionBox,
+ } from "@/lib/canvas/selectFunctions";
+-import { Action, Draw, Message } from "@/types";
+-import { Button } from "@workspace/ui/components/button";
++import { Action, Draw } from "@/types";
+ import { useEffect, useRef, useState } from "react";
+ import { BsFonts } from "react-icons/bs";
+ import {
+@@ -37,7 +36,6 @@
+ } from "react-icons/pi";
+ import { LiaHandPaper, LiaHandRock } from "react-icons/lia";
+ import {
+-  performAction,
+   performRedo,
+   performUndo,
+   pushToUndoRedoArray,
+@@ -48,33 +46,28 @@
+   TooltipProvider,
+   TooltipTrigger,
+ } from "@workspace/ui/components/tooltip";
++import { Button } from "@workspace/ui/components/button";
+ import { TbZoom } from "react-icons/tb";
+ import { GrRedo, GrUndo } from "react-icons/gr";
+ import { AiOutlineHome } from "react-icons/ai";
+-import { redirect } from "next/navigation";
+-import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux";
+-import { setUser } from "@/lib/features/meetdraw/appSlice";
+-import { useWebSocket } from "@/lib/hooks/websocket";
++import { useRouter } from "next/navigation";
+ import { toast } from "@workspace/ui/components/sonner";
+-import { WebSocketMessage } from "@workspace/common";
+-import ChatBar from "./ChatBar";
+-import {
+-  fetchAllChatMessages,
+-  fetchMoreChatMessages,
+-} from "@/actions/chatActions";
+-import { fetchAllDraws } from "@/actions/contentActions";
+ 
+-const Canvas = ({ roomId, token }: { roomId: string; token: string }) => {
+-  const [showChatBar, setShowChatBar] = useState(false);
++const DemoCanvas = () => {
+   const canvasRef = useRef<HTMLCanvasElement>(null);
+   const [isClient, setIsClient] = useState(false);
+-  const { socket, isLoading, isError } = useWebSocket(
+-    `${process.env.NEXT_PUBLIC_WS_URL}?token=${token}`
+-  );
+-  const [serverReady, setServerReady] = useState(false);
+-  const dispatch = useAppDispatch();
+-  const user = useAppSelector((state) => state.app.user);
+-  const room = useAppSelector((state) => state.app.activeRoom);
++  const router = useRouter();
++
++  // Mock user and room for demo
++  const user = { id: "demo-user-" + Math.random().toString(36).substr(2, 9) };
++  const roomId = "demo-room";
++  const authLoading = false;
++  const token = "demo-token";
++
++
++
++  /* Removed Chat State */
++
+   const [activeAction, setActiveAction] = useState<
+     "select" | "move" | "draw" | "resize" | "edit" | "erase" | "pan" | "zoom"
+   >("select");
+@@ -104,12 +97,7 @@
+   const [isDragging, setIsDragging] = useState<boolean>(false);
+   const [canUndo, setCanUndo] = useState<boolean>(false);
+   const [canRedo, setCanRedo] = useState<boolean>(false);
+-  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+-  const lastSrNoRef = useRef<number>(0);
+-  const chatMessageInputRef = useRef<HTMLTextAreaElement>(null);
+-  const unreadMessagesRef = useRef<boolean>(false);
+-  const [isLoadingMoreMessages, setIsLoadingMoreMessages] =
+-    useState<boolean>(false);
++
+   const activeDraw = useRef<Draw>(null);
+   const selectedDraw = useRef<Draw>(null);
+   const originalDrawState = useRef<Draw>(null);
+@@ -158,159 +146,27 @@
+   };
+ 
+   useEffect(() => {
+-    if (!token) {
+-      redirect("/signin");
+-    }
+-
+-    if (!user) {
+-      const user = JSON.parse(sessionStorage.getItem("user")!);
+-      if (user) {
+-        dispatch(setUser(user));
++    const savedDraws = localStorage.getItem("demo-draws");
++    if (savedDraws) {
++      try {
++        diagrams.current = JSON.parse(savedDraws);
++      } catch (e) {
++        toast.error("Failed to load your previous drawing state.");
++        console.error("Failed to load draws", e);
+       }
+     }
++  }, []);
+ 
+-    const fetchDraws = async () => {
+-      const draws = await fetchAllDraws(roomId);
+-      diagrams.current = draws;
+-    };
+-
+-    fetchDraws();
+-  }, [user, token, dispatch]);
+-
+   useEffect(() => {
+-    if (user && socket && !isLoading && !isError) {
+-      if (serverReady) {
+-        const connectMessage: WebSocketMessage = {
+-          type: "connect_room",
+-          roomId: roomId,
+-          userId: user.id,
+-        };
+-        socket.send(JSON.stringify(connectMessage));
++    const interval = setInterval(() => {
++      if (diagrams.current.length > 0) {
++        localStorage.setItem("demo-draws", JSON.stringify(diagrams.current));
+       }
++    }, 1000);
++    return () => clearInterval(interval);
++  }, []);
+ 
+-      socket.onmessage = (event) => {
+-        if (event.data === "pong") {
+-          console.log("WS Client: Heartbeat 'pong' received");
+-          return;
+-        }
+-
+-        let data;
+-        try {
+-          data = JSON.parse(event.data);
+-        } catch (e) {
+-          console.error("WS Client: Failed to parse message", event.data, e);
+-          return;
+-        }
+-
+-        switch (data.type) {
+-          case "connection_ready":
+-            setServerReady(true);
+-            break;
+-          case "error_message":
+-            toast.error(data.content, {
+-              description: "Please try again",
+-            });
+-            break;
+-          case "chat_message":
+-            const message = JSON.parse(data.content);
+-            if (message.userId !== user?.id) {
+-              unreadMessagesRef.current = true;
+-            }
+-            setChatMessages((prev) => [...prev, message]);
+-            break;
+-          case "draw":
+-            if (data.userId === user?.id) {
+-              return;
+-            }
+-            const action = JSON.parse(data.content);
+-            diagrams.current = performAction(action, diagrams.current);
+-            break;
+-        }
+-      };
+-    }
+-
+-    return () => {
+-      if (user && socket && serverReady) {
+-        const disconnectMessage: WebSocketMessage = {
+-          type: "disconnect_room",
+-          roomId: roomId,
+-          userId: user.id,
+-        };
+-        socket.send(JSON.stringify(disconnectMessage));
+-      }
+-    };
+-  }, [user, socket, isLoading, isError, roomId, serverReady]);
+-
+-  useEffect(() => {
+-    const fetchMessages = async () => {
+-      if (roomId) {
+-        try {
+-          const messages = await fetchAllChatMessages(roomId);
+-          setChatMessages(messages);
+-          if (messages.length > 0) {
+-            lastSrNoRef.current = messages[0]!.serialNumber;
+-          }
+-        } catch (error) {
+-          toast.error("Failed to fetch chat messages:", {
+-            description: "Please check your connection and try again.",
+-          });
+-          console.error("Failed to fetch chat messages:", error);
+-        }
+-      }
+-    };
+-
+-    fetchMessages();
+-  }, [roomId]);
+-
+-  const handleSendMessage = (content: string) => {
+-    if (!socket) {
+-      toast.error("Connection failed, please refresh and try again");
+-      return;
+-    }
+-
+-    if (socket && serverReady && content.trim()) {
+-      const chatMessage: WebSocketMessage = {
+-        type: "chat_message",
+-        roomId: roomId,
+-        userId: user!.id,
+-        content: content.trim(),
+-      };
+-      socket.send(JSON.stringify(chatMessage));
+-    }
+-  };
+-
+-  const handleLoadMoreMessages = async (): Promise<Message[]> => {
+-    if (!lastSrNoRef.current || isLoadingMoreMessages) return [];
+-
+-    setIsLoadingMoreMessages(true);
+-    try {
+-      const messages = await fetchMoreChatMessages(roomId, lastSrNoRef.current);
+-      if (messages.length > 0) {
+-        setChatMessages((prev) => [...messages, ...prev]);
+-        lastSrNoRef.current = messages[0]?.serialNumber || 0;
+-      } else {
+-        lastSrNoRef.current = 0;
+-      }
+-      return messages;
+-    } catch (error) {
+-      toast.error("Failed to load more messages");
+-      console.error("Failed to load more messages:", error);
+-      return [];
+-    } finally {
+-      setIsLoadingMoreMessages(false);
+-    }
+-  };
+ 
+-  const closeSocket = () => {
+-    if (user && socket && serverReady) {
+-      const disconnectMessage: WebSocketMessage = {
+-        type: "disconnect_room",
+-        roomId: roomId,
+-        userId: user.id,
+-      };
+-      socket.send(JSON.stringify(disconnectMessage));
+-    }
+-  };
+ 
+   const activeShapeRef = useRef(activeShape);
+   const selectedShapeRef = useRef(selectedShape);
+@@ -390,19 +246,16 @@
+     activeLineWidth,
+     activeFont,
+     activeFontSize,
+-    socket,
++
+   ]);
+ 
+   function executeUndo() {
+-    if (!socket) {
+-      return;
+-    }
+     console.log("undo");
+     const changes = performUndo(
+       undoRedoArrayRef.current,
+       undoRedoIndexRef.current,
+       diagrams.current,
+-      socket,
++      null,
+       user!.id,
+       roomId
+     );
+@@ -418,15 +271,12 @@
+   }
+ 
+   function executeRedo() {
+-    if (!socket) {
+-      return;
+-    }
+     console.log("redo");
+     const changes = performRedo(
+       undoRedoArrayRef.current,
+       undoRedoIndexRef.current,
+       diagrams.current,
+-      socket,
++      null,
+       user!.id,
+       roomId
+     );
+@@ -447,11 +297,11 @@
+ 
+   useEffect(() => {
+     const handleShortcuts = (event: KeyboardEvent) => {
+-      if (
+-        activeDraw.current?.shape !== "text" &&
+-        selectedDraw.current?.shape !== "text" &&
+-        chatMessageInputRef.current !== document.activeElement
+-      ) {
++      const isEditingText =
++        (activeActionRef.current === "edit" || activeActionRef.current === "draw") &&
++        (activeDraw.current?.shape === "text" || selectedDraw.current?.shape === "text");
++
++      if (!isEditingText) {
+         switch (event.key) {
+           case "1":
+           case "s":
+@@ -536,10 +386,11 @@
+     };
+ 
+     const handleShortcutsClose = (event: KeyboardEvent) => {
+-      if (
+-        activeDraw.current?.shape !== "text" &&
+-        selectedDraw.current?.shape !== "text"
+-      ) {
++      const isEditingText =
++        (activeActionRef.current === "edit" || activeActionRef.current === "draw") &&
++        (activeDraw.current?.shape === "text" || selectedDraw.current?.shape === "text");
++
++      if (!isEditingText) {
+         if (event.key === "Shift") {
+           setActiveAction("select");
+           return;
+@@ -561,7 +412,7 @@
+       document.removeEventListener("keydown", handleShortcuts);
+       document.removeEventListener("keyup", handleShortcutsClose);
+     };
+-  }, [socket, isLoading]);
++  }, []);
+ 
+   useEffect(() => {
+     if (!canvasRef.current) return;
+@@ -594,14 +445,6 @@
+     };
+ 
+     const handleMouseDown = (event: MouseEvent) => {
+-      // Prevent interactions if the server hasn't verified the connection yet or if it was rejected
+-      if (!serverReady || !socket || isLoading || isError) {
+-        toast.error("Connecting to server...", {
+-          description: "Wait until your connection is verified to draw.",
+-        });
+-        return;
+-      }
+-
+       setIsDragging(true);
+       if (activeActionRef.current === "pan") {
+         panStartPoint.current = { x: event.offsetX, y: event.offsetY };
+@@ -683,7 +526,7 @@
+       if (activeActionRef.current === "edit") {
+         if (selectedDraw.current && selectedDraw.current.shape === "text") {
+           diagrams.current.push(selectedDraw.current);
+-          if (originalDrawState.current && selectedDraw.current && socket) {
++          if (originalDrawState.current && selectedDraw.current) {
+             const action: Action = {
+               type: "edit",
+               originalDraw: JSON.parse(
+@@ -695,7 +538,7 @@
+               action,
+               undoRedoArrayRef.current,
+               undoRedoIndexRef.current,
+-              socket,
++              null,
+               user!.id,
+               roomId
+             );
+@@ -722,7 +565,7 @@
+       if (activeActionRef.current === "draw") {
+         if (activeDraw.current && activeDraw.current.shape === "text") {
+           diagrams.current.push(activeDraw.current);
+-          if (socket) {
++          if (true) {
+             const action: Action = {
+               type: "create",
+               originalDraw: null,
+@@ -732,7 +575,7 @@
+               action,
+               undoRedoArrayRef.current,
+               undoRedoIndexRef.current,
+-              socket,
++              null,
+               user!.id,
+               roomId
+             );
+@@ -955,7 +798,7 @@
+           (draw) => !toErase.current.includes(draw)
+         );
+         toErase.current.forEach((draw) => {
+-          if (socket) {
++          if (true) {
+             const action: Action = {
+               type: "erase",
+               originalDraw: JSON.parse(JSON.stringify(draw)),
+@@ -965,7 +808,7 @@
+               action,
+               undoRedoArrayRef.current,
+               undoRedoIndexRef.current,
+-              socket,
++              null,
+               user!.id,
+               roomId
+             );
+@@ -998,7 +841,7 @@
+             selectedDraw.current!.startY = a;
+           }
+         }
+-        if (originalDrawState.current && modifiedDrawState.current && socket) {
++        if (originalDrawState.current && modifiedDrawState.current) {
+           const action: Action = {
+             type: "resize",
+             originalDraw: JSON.parse(JSON.stringify(originalDrawState.current)),
+@@ -1008,7 +851,7 @@
+             action,
+             undoRedoArrayRef.current,
+             undoRedoIndexRef.current,
+-            socket,
++            null,
+             user!.id,
+             roomId
+           );
+@@ -1043,7 +886,7 @@
+           }
+           return;
+         }
+-        if (originalDrawState.current && modifiedDrawState.current && socket) {
++        if (originalDrawState.current && modifiedDrawState.current) {
+           const action: Action = {
+             type: "move",
+             originalDraw: JSON.parse(JSON.stringify(originalDrawState.current)),
+@@ -1053,7 +896,7 @@
+             action,
+             undoRedoArrayRef.current,
+             undoRedoIndexRef.current,
+-            socket,
++            null,
+             user!.id,
+             roomId
+           );
+@@ -1105,7 +948,7 @@
+         }
+ 
+         diagrams.current.push(activeDraw.current);
+-        if (socket) {
++        if (true) {
+           const action: Action = {
+             type: "create",
+             originalDraw: null,
+@@ -1116,7 +959,7 @@
+             action,
+             undoRedoArrayRef.current,
+             undoRedoIndexRef.current,
+-            socket,
++            null,
+             user!.id,
+             roomId
+           );
+@@ -1141,8 +984,13 @@
+         event.preventDefault();
+ 
+         if (event.key === "Enter") {
++          if (event.shiftKey) {
++            textInp.current += "\n";
++            activeDraw.current!.text = textInp.current;
++            return;
++          }
+           diagrams.current.push(activeDraw.current!);
+-          if (socket) {
++          if (true) {
+             const action: Action = {
+               type: "create",
+               originalDraw: null,
+@@ -1152,7 +1000,7 @@
+               action,
+               undoRedoArrayRef.current,
+               undoRedoIndexRef.current,
+-              socket,
++              null,
+               user!.id,
+               roomId
+             );
+@@ -1196,8 +1044,13 @@
+         event.preventDefault();
+ 
+         if (event.key === "Enter") {
++          if (event.shiftKey) {
++            textInp.current += "\n";
++            selectedDraw.current!.text = textInp.current;
++            return;
++          }
+           diagrams.current.push(selectedDraw.current!);
+-          if (originalDrawState.current && selectedDraw.current && socket) {
++          if (originalDrawState.current && selectedDraw.current) {
+             const action: Action = {
+               type: "edit",
+               originalDraw: JSON.parse(
+@@ -1209,7 +1062,7 @@
+               action,
+               undoRedoArrayRef.current,
+               undoRedoIndexRef.current,
+-              socket,
++              null,
+               user!.id,
+               roomId
+             );
+@@ -1278,7 +1131,7 @@
+       canvasCurrent.removeEventListener("keydown", handleKeyDown);
+       canvasCurrent.removeEventListener("wheel", handleScroll);
+     };
+-  }, [socket, serverReady, isLoading, isError]);
++  }, []);
+ 
+   const zoomToPoint = (newScale: number) => {
+     const canvasCurrent = canvasRef.current;
+@@ -1304,9 +1157,8 @@
+     if (selectedDraw.current) {
+       selectedDraw.current.fillStyle = color;
+       if (
+-        originalDrawState.current?.fillStyle !==
+-          selectedDraw.current.fillStyle &&
+-        socket
++        originalDrawState.current &&
++        originalDrawState.current.fillStyle !== selectedDraw.current.fillStyle
+       ) {
+         const action: Action = {
+           type: "edit",
+@@ -1317,7 +1169,7 @@
+           action,
+           undoRedoArrayRef.current,
+           undoRedoIndexRef.current,
+-          socket,
++          null,
+           user!.id,
+           roomId
+         );
+@@ -1338,9 +1190,9 @@
+     if (selectedDraw.current) {
+       selectedDraw.current.strokeStyle = color;
+       if (
+-        originalDrawState.current?.strokeStyle !==
+-          selectedDraw.current.strokeStyle &&
+-        socket
++        originalDrawState.current &&
++        originalDrawState.current.strokeStyle !==
++          selectedDraw.current.strokeStyle
+       ) {
+         const action: Action = {
+           type: "edit",
+@@ -1351,7 +1203,7 @@
+           action,
+           undoRedoArrayRef.current,
+           undoRedoIndexRef.current,
+-          socket,
++          null,
+           user!.id,
+           roomId
+         );
+@@ -1372,9 +1224,8 @@
+     if (selectedDraw.current) {
+       selectedDraw.current.lineWidth = width;
+       if (
+-        originalDrawState.current?.lineWidth !==
+-          selectedDraw.current.lineWidth &&
+-        socket
++        originalDrawState.current &&
++        originalDrawState.current.lineWidth !== selectedDraw.current.lineWidth
+       ) {
+         const action: Action = {
+           type: "edit",
+@@ -1385,7 +1236,7 @@
+           action,
+           undoRedoArrayRef.current,
+           undoRedoIndexRef.current,
+-          socket,
++          null,
+           user!.id,
+           roomId
+         );
+@@ -1406,8 +1257,8 @@
+     if (selectedDraw.current) {
+       selectedDraw.current.font = font;
+       if (
+-        originalDrawState.current?.font !== selectedDraw.current.font &&
+-        socket
++        originalDrawState.current &&
++        originalDrawState.current.font !== selectedDraw.current.font
+       ) {
+         const action: Action = {
+           type: "edit",
+@@ -1418,7 +1269,7 @@
+           action,
+           undoRedoArrayRef.current,
+           undoRedoIndexRef.current,
+-          socket,
++          null,
+           user!.id,
+           roomId
+         );
+@@ -1439,8 +1290,8 @@
+     if (selectedDraw.current) {
+       selectedDraw.current.fontSize = size.toString();
+       if (
+-        originalDrawState.current?.fontSize !== selectedDraw.current.fontSize &&
+-        socket
++        originalDrawState.current &&
++        originalDrawState.current.fontSize !== selectedDraw.current.fontSize
+       ) {
+         const action: Action = {
+           type: "edit",
+@@ -1451,7 +1302,7 @@
+           action,
+           undoRedoArrayRef.current,
+           undoRedoIndexRef.current,
+-          socket,
++          null,
+           user!.id,
+           roomId
+         );
+@@ -1467,22 +1318,10 @@
+     }
+   };
+ 
+-  if (isError) {
+-    return (
+-      <div className="h-screen w-screen relative flex items-center justify-center bg-neutral-900">
+-        <p className="text-white">Faced some Errors, Please Refresh</p>
+-      </div>
+-    );
+-  }
++
+ 
+-  if (isLoading) {
+-    return (
+-      <div className="h-screen w-screen relative flex items-center justify-center bg-neutral-900">
+-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-green-500" />
+-      </div>
+-    );
+-  }
+ 
++
+   return (
+     <TooltipProvider>
+       <div className="h-screen w-screen relative">
+@@ -1492,8 +1331,7 @@
+               size="icon"
+               className={`bg-transparent relative p-2 hover:bg-green-600/20 cursor-pointer`}
+               onClick={() => {
+-                closeSocket();
+-                redirect("/home");
++                router.push("/");
+               }}
+             >
+               <AiOutlineHome className="text-white" size="18" />
+@@ -1501,35 +1339,7 @@
+           </div>
+         </div>
+ 
+-        <div className="fixed z-2 w-fit h-fit bg-black rounded-lg right-3 top-3">
+-          <div className="bg-green-400/25 z-1 rounded-lg px-1.5 py-1 flex gap-1.5 items-center">
+-            <Button
+-              size="icon"
+-              className={`bg-transparent relative p-2 hover:bg-green-600/20 cursor-pointer ${showChatBar ? "bg-green-600/40" : ""} ${unreadMessagesRef.current ? "bg-green-600/5" : ""}`}
+-              onClick={() => {
+-                setShowChatBar(!showChatBar);
+-                unreadMessagesRef.current = false;
+-              }}
+-            >
+-              <PiChatsCircle className="text-white" size="18" />
+-              {unreadMessagesRef.current && (
+-                <div className="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full" />
+-              )}
+-            </Button>
+-          </div>
+-        </div>
+ 
+-        {showChatBar && (
+-          <ChatBar
+-            closeChat={() => setShowChatBar(false)}
+-            messages={chatMessages}
+-            user={user!}
+-            onSendMessage={handleSendMessage}
+-            onLoadMoreMessages={handleLoadMoreMessages}
+-            isLoadingMore={isLoadingMoreMessages}
+-            chatMessageInputRef={chatMessageInputRef}
+-          />
+-        )}
+ 
+         <div className="fixed z-2 w-fit h-fit bg-black rounded-lg left-1/2 top-3 transform -translate-x-1/2">
+           <div className="bg-green-400/25 z-1 rounded-lg px-1.5 py-1 flex gap-1.5 items-center">
+@@ -2304,4 +2114,4 @@
+   );
+ };
+ 
+-export default Canvas;
++export default DemoCanvas;

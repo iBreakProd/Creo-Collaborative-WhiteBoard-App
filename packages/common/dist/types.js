@@ -27,6 +27,7 @@ exports.WebSocketMessageSchema = zod_1.z.object({
         "disconnect_room",
         "chat_message",
         "draw",
+        "cursor",
         "error_message",
     ]),
     roomId: zod_1.z.string(),

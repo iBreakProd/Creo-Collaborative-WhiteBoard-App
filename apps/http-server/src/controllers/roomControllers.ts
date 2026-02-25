@@ -177,3 +177,36 @@ export async function fetchAllRoomsController(req: Request, res: Response) {
     });
   }
 }
+
+export async function fetchRoomByIdController(req: Request, res: Response) {
+  const userId = req.userId;
+  const roomId = req.params.roomId;
+
+  if (!userId) {
+    res.status(401).json({ message: "User Id not found" });
+    return;
+  }
+
+  if (!roomId) {
+    res.status(400).json({ message: "Room Id required" });
+    return;
+  }
+
+  try {
+    const existingRooms = await db.select().from(roomsTable).where(eq(roomsTable.id, roomId));
+    const room = existingRooms[0];
+
+    if (!room) {
+      res.status(404).json({ message: "Room not found" });
+      return;
+    }
+
+    res.json({
+      message: "Room fetched successfully",
+      room,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: "Error fetching room" });
+  }
+}

@@ -294,7 +294,20 @@ const ChatRoom = ({ jwtCookie }: { jwtCookie: RequestCookie }) => {
   return (
     <div className="flex flex-col gap-2 h-full">
       <div className="flex items-center justify-between px-1">
-        <h1 className="text-2xl font-bold">{activeRoom.title}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+          <h1 className="text-2xl font-bold">{activeRoom.title}</h1>
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-neutral-900 border border-neutral-700/50 rounded-md w-fit">
+            <span className="text-xs text-neutral-400 font-medium select-none uppercase tracking-wider">Join Code</span>
+            <span className="text-sm text-green-400 font-bold tracking-wider">{activeRoom.joinCode}</span>
+            <button
+              onClick={handleCopyJoinCode}
+              className="ml-1 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              title="Copy Join Code"
+            >
+              <BiCopy size={15} />
+            </button>
+          </div>
+        </div>
         <div className="flex items-center gap-4">
           <Tooltip>
             <TooltipTrigger>
@@ -306,15 +319,6 @@ const ChatRoom = ({ jwtCookie }: { jwtCookie: RequestCookie }) => {
             >
               <div>
                 <h3>Admin: {activeRoom.admin.username}</h3>
-                <div className="flex gap-2">
-                  <h4>Join Code: {activeRoom.joinCode}</h4>
-                  <button
-                    className="cursor-pointer"
-                    onClick={handleCopyJoinCode}
-                  >
-                    <BiCopy />
-                  </button>
-                </div>
               </div>
             </TooltipContent>
           </Tooltip>

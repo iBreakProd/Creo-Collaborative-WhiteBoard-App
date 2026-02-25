@@ -10,11 +10,6 @@ import { GiAlienFire, GiJetFighter } from "react-icons/gi";
 import { useAppSelector } from "@/lib/hooks/redux";
 import { redirect } from "next/navigation";
 import { BiChevronDown, BiLogOut } from "react-icons/bi";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
 import { signoutAction } from "@/actions/authActions";
 import { useEffect } from "react";
 
@@ -42,24 +37,18 @@ const UserCard = () => {
         <div className="flex w-full justify-between items-center">
           <CardTitle className="flex gap-1 items-center">
             {user.username}
-            <Tooltip>
-              <TooltipTrigger className="cursor-pointer">
-                <BiChevronDown />
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="">
-                <button
-                  className="flex items-center gap-1 cursor-pointer"
-                  onClick={() => {
-                    signoutAction();
-                    redirect("/signin");
-                  }}
-                >
-                  <BiLogOut size={14} />
-                </button>
-              </TooltipContent>
-            </Tooltip>
+            <GiJetFighter className="text-neutral-400 ml-1" size={22} />
           </CardTitle>
-          <GiJetFighter className="text-neutral-400" size={26} />
+          <button
+            className="cursor-pointer text-red-400 hover:text-red-500 transition-colors p-1"
+            onClick={() => {
+              signoutAction();
+              redirect("/signin");
+            }}
+            title="Sign Out"
+          >
+            <BiLogOut size={20} />
+          </button>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">

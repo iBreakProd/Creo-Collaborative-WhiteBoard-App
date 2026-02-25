@@ -68,3 +68,13 @@ export async function joinRoomAction(
     };
   }
 }
+
+export async function fetchRoomById(roomId: string) {
+  try {
+    const res = await axiosInstance.get(`/room/${roomId}`);
+    return res.data.room;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
