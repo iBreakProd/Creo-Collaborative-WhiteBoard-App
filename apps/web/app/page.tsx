@@ -11,6 +11,7 @@ import {
   Globe,
   Sparkles,
   MousePointer2,
+  Terminal,
 } from "lucide-react";
 import { RxArrowTopRight } from "react-icons/rx";
 import { TbBeta } from "react-icons/tb";
@@ -300,7 +301,56 @@ export default function Page() {
         </div>
       </section>
 
-      <footer className="py-16 px-4 pb-0 overflow-hidden relative">
+      <section id="under-the-hood" className="py-24 px-4 relative z-10 bg-neutral-950 border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center gap-16">
+            <div className="md:w-1/2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 text-sm font-medium mb-6">
+                <Terminal className="w-4 h-4" />
+                For the Nerds
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black font-cabinet-grotesk text-white mb-6">
+                Engineered for performance.
+              </h2>
+              <p className="text-xl text-neutral-400 mb-8 leading-relaxed font-medium">
+                Creo is powered by a <span className="text-green-400">low-latency WebSocket</span> server for fast sync and a hyper-optimized <span className="text-blue-400">HTML5 Canvas</span> loop using <code className="text-sm bg-neutral-800 px-2 py-1 rounded">requestAnimationFrame</code>. We optimize by bypassing Virtual DOM reconciliation for rapid 2D vector drawing.
+              </p>
+              <Link href="/docs">
+                <Button variant="outline" className="group border-green-500/30 hover:bg-green-500/10 hover:text-green-400 text-white rounded-xl px-6 py-6 font-bold cursor-pointer transition-all">
+                  Know more about our tech
+                  <Terminal className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="md:w-1/2 w-full relative">
+              <div className="absolute inset-0 bg-green-500/10 blur-[100px] rounded-full" />
+              <div className="relative bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-2xl p-6 flex flex-col min-w-0">
+                <div className="flex gap-2 mb-4">
+                  <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                </div>
+                <div className="text-sm font-mono text-neutral-300 leading-relaxed overflow-x-auto w-full scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+<pre className="min-w-0"><code>
+  <span className="text-blue-400">let</span> frameId: <span className="text-green-300">number</span>;<br/>
+  <br/>
+  <span className="text-blue-400">const</span> render = () <span className="text-pink-400">=&gt;</span> {"{"}<br/>
+  &nbsp;&nbsp;<span className="text-neutral-500"/>
+  &nbsp;&nbsp;<span className="text-yellow-200">renderDraws</span>(ctx, canvas, ...);<br/>
+  &nbsp;&nbsp;frameId = <span className="text-yellow-200">requestAnimationFrame</span>(render);<br/>
+  {"}"};<br/>
+  <br/>
+  frameId = <span className="text-yellow-200">requestAnimationFrame</span>(render);<br/>
+</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="py-16 px-4 pb-0 overflow-hidden relative border-t border-white/5 bg-neutral-950">
         <div className="container mx-auto text-center z-10 relative">
           
           <div className="mb-24 flex flex-col items-center">
