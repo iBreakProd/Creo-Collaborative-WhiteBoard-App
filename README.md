@@ -12,19 +12,19 @@ Creo is architected as a full-stack Turborepo containing independent Node.js mic
 
 ```mermaid
 graph TD
-    subgraph "Frontend (Next.js React)"
-        Client["Client Browser\n(Canvas API & React)"]
-        State["Local State Buffer\n(Zustand / Refs)"]
+    subgraph Frontend [Frontend Next.js React]
+        Client(Client Browser - Canvas API & React)
+        State(Local State Buffer - Zustand / Refs)
         Client <-->|User Input / Renders| State
     end
 
-    subgraph "Backend Infrastructure"
-        HTTP["HTTP API Server\n(Express)"]
-        WS["WebSocket Server\n(Node.js 'ws')"]
+    subgraph Backend [Backend Infrastructure]
+        HTTP(HTTP API Server - Express)
+        WS(WebSocket Server - Node.js ws)
     end
 
-    subgraph "Persistence Layer"
-        DB[("PostgreSQL Database\n(Prisma / Drizzle)")]
+    subgraph Persistence [Persistence Layer]
+        DB[(PostgreSQL Database - Prisma / Drizzle)]
     end
 
     %% Flow connections
