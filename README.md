@@ -12,26 +12,35 @@ Creo is architected as a full-stack Turborepo containing independent Node.js mic
 
 ```mermaid
 graph TD
-    subgraph Frontend [Frontend Next.js React]
-        Client(Client Browser - Canvas API & React)
-        State(Local State Buffer - Zustand / Refs)
+    %% Styling
+    classDef frontend fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff,padding:10px
+    classDef backend fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff,padding:10px
+    classDef storage fill:#f59e0b,stroke:#b45309,stroke-width:2px,color:#fff,padding:10px
+    classDef subGraphStyle fill:#1e1e1e,stroke:#333333,stroke-width:2px,color:#a3a3a3,stroke-dasharray: 5 5
+
+  subgraph Frontend [Frontend Next.js React]
+        Client("Client Browser (Canvas API & React)"):::frontend
+        State("Local State Buffer (Zustand / Refs)"):::frontend
         Client <-->|User Input / Renders| State
     end
 
     subgraph Backend [Backend Infrastructure]
-        HTTP(HTTP API Server - Express)
-        WS(WebSocket Server - Node.js ws)
+        HTTP("HTTP API Server (Express)"):::backend
+        WS("WebSocket Server (Node.js ws)"):::backend
     end
 
     subgraph Persistence [Persistence Layer]
-        DB[(PostgreSQL Database - Prisma / Drizzle)]
+        DB[("PostgreSQL Database (Prisma / Drizzle)")]:::storage
     end
+
+    %% Apply subgraph styles
+    class Frontend,Backend,Persistence subGraphStyle
 
     %% Flow connections
     Client -->|REST: Auth / Fetch Rooms| HTTP
     HTTP -->|Read/Write| DB
     
-    State <-->|Bi-directional Sync\n(JSON Payloads)| WS
+    State <-->|Bi-directional Sync / JSON Payloads| WS
     WS -->|Persist Drawings/Chat| DB
 ```
 
