@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "lint": "eslint . --max-warnings 0"
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit --jsx preserve"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",

@@ -15,7 +15,8 @@
     "start:web": "cd apps/web && pnpm start",
     "build:http": "cd apps/http-server && tsc -b",
     "build:ws": "cd apps/ws-server && tsc -b",
-    "build:web": "cd apps/web && pnpm build"
+    "build:web": "cd apps/web && pnpm build",
+    "typecheck": "turbo typecheck"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --jsx preserve"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",

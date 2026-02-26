@@ -6,6 +6,6 @@
       "@workspace/ui/*": ["./src/*"]
     }
   },
-  "include": [".", "../../apps/web/components/auth"],
+  "include": ["."],
   "exclude": ["node_modules", "dist"]
 }

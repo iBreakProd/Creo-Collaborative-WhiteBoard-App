@@ -126,10 +126,8 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
                 roomId: chatsTable.roomId,
             });
 
-            // Need to fetch user details separately or join?
-            // Returning clause only returns table columns. 
-            // To match previous Select behavior (including user relation), we might need a subsequent fetch or just return what we have if the client handles it.
-            // But let's fetch user name if needed by client.
+            if (!addChat) throw new Error("Failed to insert chat message");
+
             const user = await db.select({ username: usersTable.username }).from(usersTable).where(eq(usersTable.id, addChat.userId));
             
             const chatWithUser = {
