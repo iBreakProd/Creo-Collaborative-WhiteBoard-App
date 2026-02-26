@@ -8,6 +8,13 @@
       "when": 1771590154064,
       "tag": "0000_common_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772123791128,
+      "tag": "0001_heavy_blizzard",
+      "breakpoints": true
     }
   ]
 }

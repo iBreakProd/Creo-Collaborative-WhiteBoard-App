@@ -179,7 +179,6 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
         const drawData = JSON.parse(validMessage.data.content!);
 
         try {
-          let addedDraw;
           let draw;
           switch (drawData.type) {
             case "create":
@@ -332,7 +331,6 @@ wss.on("connection", async (socket: WebSocket, req: Request) => {
       process.env.JWT_SECRET || "kjhytfrde45678iuytrfdcfgy6tr"
     ) as JwtPayload;
 
-    // Prevent DrizzleQueryError: valid UUID check
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(verified.id)) {
       console.log("Invalid User ID format");

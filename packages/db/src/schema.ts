@@ -7,6 +7,7 @@ import {
   timestamp,
   uuid,
   integer,
+  real,
 } from "drizzle-orm/pg-core";
 
 export const shapeEnum = pgEnum("shape", [
@@ -55,13 +56,13 @@ export const drawsTable = pgTable("draw", {
   shape: shapeEnum("shape").notNull(),
   strokeStyle: text("strokeStyle").notNull(),
   fillStyle: text("fillStyle").notNull(),
-  lineWidth: integer("lineWidth").notNull(),
+  lineWidth: real("lineWidth").notNull(),
   font: text("font"),
   fontSize: text("fontSize"),
-  startX: integer("startX"),
-  startY: integer("startY"),
-  endX: integer("endX"),
-  endY: integer("endY"),
+  startX: real("startX"),
+  startY: real("startY"),
+  endX: real("endX"),
+  endY: real("endY"),
   text: text("text"),
   points: json("points"),
   roomId: uuid("roomId")

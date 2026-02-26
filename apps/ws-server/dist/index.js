@@ -105,10 +105,8 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
                         userId: client_1.chatsTable.userId,
                         roomId: client_1.chatsTable.roomId,
                     });
-                    // Need to fetch user details separately or join?
-                    // Returning clause only returns table columns. 
-                    // To match previous Select behavior (including user relation), we might need a subsequent fetch or just return what we have if the client handles it.
-                    // But let's fetch user name if needed by client.
+                    if (!addChat)
+                        throw new Error("Failed to insert chat message");
                     const user = yield client_1.db.select({ username: client_1.usersTable.username }).from(client_1.usersTable).where((0, drizzle_orm_1.eq)(client_1.usersTable.id, addChat.userId));
                     const chatWithUser = Object.assign(Object.assign({}, addChat), { user: {
                             username: (_b = user[0]) === null || _b === void 0 ? void 0 : _b.username
@@ -142,7 +140,6 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
                 }
                 const drawData = JSON.parse(validMessage.data.content);
                 try {
-                    let addedDraw;
                     let draw;
                     switch (drawData.type) {
                         case "create":
@@ -152,13 +149,13 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
                                 shape: draw.shape,
                                 strokeStyle: draw.strokeStyle,
                                 fillStyle: draw.fillStyle,
-                                lineWidth: draw.lineWidth,
+                                lineWidth: Math.round(draw.lineWidth),
                                 font: draw.font,
                                 fontSize: draw.fontSize,
-                                startX: draw.startX,
-                                startY: draw.startY,
-                                endX: draw.endX,
-                                endY: draw.endY,
+                                startX: draw.startX ? Math.round(draw.startX) : null,
+                                startY: draw.startY ? Math.round(draw.startY) : null,
+                                endX: draw.endX ? Math.round(draw.endX) : null,
+                                endY: draw.endY ? Math.round(draw.endY) : null,
                                 text: draw.text,
                                 points: draw.points,
                                 roomId: validMessage.data.roomId,
@@ -169,16 +166,16 @@ wss.on("connection", (socket, req) => __awaiter(void 0, void 0, void 0, function
                         case "resize":
                             draw = drawData.modifiedDraw;
                             yield client_1.db.update(client_1.drawsTable).set({
-                                startX: draw.startX,
-                                startY: draw.startY,
-                                endX: draw.endX,
-                                endY: draw.endY,
+                                startX: draw.startX ? Math.round(draw.startX) : null,
+                                startY: draw.startY ? Math.round(draw.startY) : null,
+                                endX: draw.endX ? Math.round(draw.endX) : null,
+                                endY: draw.endY ? Math.round(draw.endY) : null,
                                 text: draw.text,
                                 points: draw.points,
                                 shape: draw.shape,
                                 strokeStyle: draw.strokeStyle,
                                 fillStyle: draw.fillStyle,
-                                lineWidth: draw.lineWidth,
+                                lineWidth: Math.round(draw.lineWidth),
                                 font: draw.font,
                                 fontSize: draw.fontSize,
                             }).where((0, drizzle_orm_1.eq)(client_1.drawsTable.id, draw.id));
