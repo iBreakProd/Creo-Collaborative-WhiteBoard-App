@@ -21,33 +21,33 @@ graph TD
     classDef subGraphStyle fill:#1e1e1e,stroke:#333333,stroke-width:2px,color:#a3a3a3,stroke-dasharray: 5 5
 
   subgraph Frontend [Frontend Next.js React]
-        Client("Client Browser (Canvas API & React)"):::frontend
-        State("Local State Buffer (Zustand / Refs)"):::frontend
-        Client <-->|User Input / Renders| State
+        Client("Client Browser <br/>(Canvas API & React)"):::frontend
+        State("Local State Buffer <br/>(Zustand / Refs)"):::frontend
+        Client <-->|User Input <br/>/ Renders| State
     end
 
     subgraph Backend [Backend Infrastructure]
-        HTTP("HTTP API Server (Express)"):::backend
-        WS("WebSocket Server (Node.js ws)"):::backend
+        HTTP("HTTP API Server <br/>(Node.js Express)"):::backend
+        WS("WebSocket Server <br/>(Node.js ws)"):::backend
     end
 
     subgraph Persistence [Persistence Layer]
-        DB[("PostgreSQL Database (Prisma / Drizzle)")]:::storage
+        DB[("PostgreSQL Database <br/>(Drizzle)")]:::storage
     end
 
     %% Apply subgraph styles
     class Frontend,Backend,Persistence subGraphStyle
 
     %% Flow connections
-    Client -->|REST: Auth / Fetch Rooms| HTTP
+    Client -->|REST: Auth <br/>/ Fetch Rooms| HTTP
     HTTP -->|Read/Write| DB
     
-    State <-->|Bi-directional Sync / JSON Payloads| WS
+    State <-->|Bi-directional Sync <br/> JSON Payloads| WS
     WS -->|Persist Drawings/Chat| DB
 ```
 
 ### Core Components
-- **HTTP API Server:** A RESTful Express service handling authentication, room creation, and initial metadata fetching.
+- **HTTP API Server:** A RESTful Node.js Express service handling authentication, room creation, and initial metadata fetching.
 - **WebSocket Server:** A lightweight Node `ws` server managing persistent TCP connections. It holds active rooms in memory (`Map<string, WebSocket[]>`) for O(1) routing, ensuring low-latency broadcasts of cursor movements and vector data.
 - **Frontend (Next.js & Canvas):** A highly optimized React application that bypasses the Virtual DOM for real-time rendering.
 
