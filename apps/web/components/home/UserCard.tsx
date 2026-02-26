@@ -55,7 +55,7 @@ const UserCard = () => {
       <CardContent className="space-y-2">
         <p>{user.name}</p>
         <p className="flex items-center gap-1">
-          Total Meetdraws -
+          Total Canvases -
           {rooms?.length ? (
             <span className="">{rooms.length}</span>
           ) : (

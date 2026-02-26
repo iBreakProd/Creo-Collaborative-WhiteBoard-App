@@ -63,7 +63,7 @@ const MeetdrawsView = () => {
   return (
     <>
       <div className="flex w-full items-center justify-between">
-        <h3 className="text-xl font-medium">Your Meetdraws</h3>
+        <h3 className="text-xl font-medium">Your Canvases</h3>
 
         <div className="relative w-fit flex items-center rounded-lg">
           <Input

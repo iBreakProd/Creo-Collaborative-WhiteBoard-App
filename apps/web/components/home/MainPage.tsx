@@ -91,20 +91,20 @@ const MainPage = ({
       </div>
       <div className="flex-1 min-h-0 w-3/4 flex flex-col space-y-2 p-2 border rounded-xl backdrop-blur-md bg-black/10">
         <div className="border  rounded-lg flex items-center justify-between py-3 px-4 backdrop-blur-md bg-black/40">
-          <h1 className="text-2xl font-pencerio font-bold">meetdraw/ Home</h1>
+          <h1 className="text-2xl font-pencerio font-bold">creo/ Home</h1>
           <div className="flex gap-2">
             <StateButton
               variant="secondary"
               value="join-room"
               onClick={() => dispatch(setHomeView("join-room"))}
             >
-              Join Meetdraw
+              Join Canvas
             </StateButton>
             <StateButton
               value="create-room"
               onClick={() => dispatch(setHomeView("create-room"))}
             >
-              Add Meetdraw
+              Add Canvas
             </StateButton>
           </div>
         </div>

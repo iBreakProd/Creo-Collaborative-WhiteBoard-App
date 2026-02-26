@@ -89,7 +89,7 @@ export default function SigninForm({
         <CardDescription className="text-sm text-neutral-300">
           Sign in to use{" "}
           <span className="font-pencerio font-bold tracking-wider">
-            meetdraw
+            creo
           </span>
         </CardDescription>
       </CardHeader>
@@ -131,7 +131,7 @@ export default function SigninForm({
       <CardFooter className="flex-col gap-2 -mt-3">
         <p className="self-start text-xs">
           Don't have an account?{" "}
-          <Link href={"/signup"} className="underline hover:text-green-500">
+          <Link href={"/signup"} className="underline hover:text-green-500 cursor-pointer">
             Sign up.
           </Link>
         </p>

@@ -201,7 +201,7 @@ const ChatBar = ({
         {showArrow === "down" && (
           <button
             onClick={scrollToBottom}
-            className="absolute bottom-2 right-2 bg-neutral-800 hover:bg-neutral-700 rounded-full p-2 shadow-lg transition-colors"
+            className="absolute bottom-2 right-2 bg-neutral-800 hover:bg-neutral-700 rounded-full p-2 shadow-lg transition-colors cursor-pointer"
           >
             <FaChevronDown className="text-neutral-400" size={12} />
             {showBadge && (
@@ -213,7 +213,7 @@ const ChatBar = ({
         {showArrow === "up" && (
           <button
             onClick={scrollToTop}
-            className="absolute bottom-2 right-2 bg-neutral-800 hover:bg-neutral-700 rounded-full p-2 shadow-lg transition-colors"
+            className="absolute bottom-2 right-2 bg-neutral-800 hover:bg-neutral-700 rounded-full p-2 shadow-lg transition-colors cursor-pointer"
           >
             <FaChevronUp className="text-neutral-400" size={12} />
           </button>
@@ -240,7 +240,7 @@ const ChatBar = ({
           <Button
             onClick={handleSendMessage}
             size="sm"
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors"
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors cursor-pointer"
           >
             <IoSend className="w-4 h-4" />
           </Button>

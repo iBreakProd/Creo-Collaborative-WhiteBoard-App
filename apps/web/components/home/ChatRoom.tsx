@@ -330,7 +330,7 @@ const ChatRoom = ({ jwtCookie }: { jwtCookie: RequestCookie }) => {
           </Tooltip>
           <Link
             href={`/canvas/${activeRoom.id}`}
-            className="flex items-center gap-1 py-0.5 px-3 bg-neutral-900/60 border border-neutral-800 text-neutral-400 hover:text-neutral-300 hover:bg-neutral-800/50 rounded-sm"
+            className="flex items-center gap-1 py-0.5 px-3 bg-neutral-900/60 border border-neutral-800 text-neutral-400 hover:text-neutral-300 hover:bg-neutral-800/50 rounded-sm cursor-pointer"
           >
             Canvas
             <GoArrowUpRight />

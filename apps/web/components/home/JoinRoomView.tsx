@@ -26,7 +26,7 @@ const JoinRoomView = () => {
   return (
     <>
       <div className="flex w-full items-center justify-between">
-        <h3 className="text-xl font-medium">Join a Meetdraw</h3>
+        <h3 className="text-xl font-medium">Join a canvas</h3>
         <button
           onClick={() => dispatch(setHomeView("meetdraws"))}
           className="cursor-pointer"

@@ -9,257 +9,343 @@ import {
   Share2,
   Users,
   Globe,
+  Sparkles,
+  MousePointer2,
 } from "lucide-react";
 import { RxArrowTopRight } from "react-icons/rx";
 import { TbBeta } from "react-icons/tb";
 import { BsTwitterX } from "react-icons/bs";
-import { FiLinkedin } from "react-icons/fi";
-import { FiGithub } from "react-icons/fi";
+import { FiLinkedin, FiGithub } from "react-icons/fi";
 import { FaCode } from "react-icons/fa6";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+
+const BackgroundBlobs = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+      <motion.div
+        animate={{
+          x: [0, 50, 0, -50, 0],
+          y: [0, -50, 0, 50, 0],
+        }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute -top-20 -left-20 w-96 h-96 bg-green-500/30 rounded-full blur-[100px]"
+      />
+      <motion.div
+        animate={{
+          x: [0, -60, 0, 60, 0],
+          y: [0, 60, 0, -60, 0],
+        }}
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        className="absolute top-1/2 right-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px]"
+      />
+      <motion.div
+        animate={{
+          x: [0, 40, 0, -40, 0],
+          y: [0, -30, 0, 30, 0],
+        }}
+        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+        className="absolute -bottom-40 left-1/3 w-80 h-80 bg-pink-500/20 rounded-full blur-[100px]"
+      />
+      <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
+    </div>
+  );
+};
+
+const ScribbleCanvas = () => {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  return (
+    <div
+      className="absolute inset-0 z-0"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      <motion.div
+        className="fixed pointer-events-none z-50 text-green-400 opacity-60 mix-blend-screen"
+        animate={{
+          x: mousePos.x - 16,
+          y: mousePos.y - 16,
+          scale: isHovering ? 1.5 : 0,
+        }}
+        transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
+      >
+        <Sparkles size={32} />
+      </motion.div>
+    </div>
+  );
+};
 
 export default function Page() {
   return (
-    <div className="w-full min-h-screen h-fit overflow-x-clip bg-neutral-950 text-white [&::-webkit-scrollbar]:hidden font-nunito-variable">
+    <div className="w-full min-h-screen h-fit overflow-x-hidden bg-neutral-950 text-white font-nunito-variable selection:bg-green-500/30">
+      <BackgroundBlobs />
       <section
         id="hero"
-        className="relative w-full h-screen flex flex-col justify-center items-center text-center px-4"
+        className="relative w-full min-h-[90vh] flex flex-col justify-center items-center text-center px-4 pt-20 pb-20"
       >
-        <h1 className="text-white/90 text-4xl font-bold font-pencerio absolute top-4 left-4">
-          meetdraw
-        </h1>
-        <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
-        <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-green-500/80 rounded-full blur-[200px] -translate-x-1/2 -translate-y-1/2" />
-        <div className="relative z-10 flex flex-col items-center">
-          <h1 className="text-5xl md:text-7xl font-bold font-cabinet-grotesk bg-clip-text tracking-tight text-transparent bg-gradient-to-b from-neutral-50 to-neutral-700 py-1">
-            Draw Together, <br className="block lg:hidden" /> Create Together
-          </h1>
-          <p className="mt-6 text-lg md:text-xl text-neutral-300/90 max-w-2xl">
-            The collaborative whiteboard that brings your ideas to life.{" "}
-            <br className="hidden md:block" />
-            Draw, chat, and brainstorm in real-time with your team.
-          </p>
-          <div className="mt-8 flex flex-col items-center sm:flex-row gap-4">
-            <Link href="/demo">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto cursor-pointer bg-neutral-400/20 backdrop-blur-[1px] border text-neutral-300 border-neutral-300/20 hover:bg-neutral-400/30 hover:border-neutral-300/30"
+        <ScribbleCanvas />
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="absolute top-6 left-6 z-20"
+        >
+          <span className="text-white text-3xl font-bold font-pencerio tracking-wide hover:text-green-400 transition-colors cursor-default">
+            creo
+          </span>
+        </motion.div>
+        <div className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", delay: 0.2 }}
+            className="mb-8 px-4 py-1.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 text-sm font-semibold flex items-center gap-2 backdrop-blur-md"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            The whiteboard that doesn't feel like work
+          </motion.div>
+
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", mass: 1, damping: 20, delay: 0.3 }}
+            className="text-5xl md:text-7xl lg:text-8xl font-black font-cabinet-grotesk tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-neutral-600 py-2 leading-[1.1]"
+          >
+            Jump in, draw together,&nbsp; <br className="hidden md:block"/>
+            <span className="relative inline-block mt-2">
+              <span className="relative z-10 text-white">make a mess.</span>
+              <motion.span 
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 1.5, delay: 1 }}
+                className="absolute -bottom-4 -left-4 -right-4 h-8 text-green-500 opacity-80 z-[-1] pointer-events-none"
               >
-                Try the Demo <RxArrowTopRight />
-              </Button>
-            </Link>
+                <svg viewBox="0 0 200 20" preserveAspectRatio="none" className="w-full h-full stroke-current fill-none stroke-[4px] stroke-linecap-round">
+                  <path d="M5,15 Q50,-5 100,10 T195,5" />
+                </svg>
+              </motion.span>
+            </span>
+          </motion.h1>
+
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-8 text-lg md:text-xl text-neutral-400 max-w-2xl font-medium"
+          >
+            No boring corporate logins. No clunky menus. Just grab a link, invite your friends or team, and start ideating in seconds.
+          </motion.p>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", delay: 0.6 }}
+            className="mt-12 flex flex-col sm:flex-row items-center gap-6"
+          >
             <Link href="/signup">
               <Button
                 size="lg"
-                variant="secondary"
-                className="w-full sm:w-auto cursor-pointer py-[20px] bg-black/20 backdrop-blur-[1.5px] border text-neutral-300 border-neutral-300/20 hover:bg-black/30 hover:border-neutral-300/30"
+                className="group relative px-8 py-6 bg-white text-black hover:bg-neutral-200 rounded-2xl font-bold text-lg overflow-hidden transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
-                Create an account
+                <span className="relative z-10 flex items-center gap-2">
+                  Create a canvas (it's free) <MousePointer2 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                </span>
+                <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 opacity-0 group-hover:opacity-20 transition-opacity blur-xl"></div>
               </Button>
             </Link>
+            <div className="relative mt-8 sm:mt-0">
+              <Link href="/demo">
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  className="px-8 py-6 rounded-2xl font-bold text-lg border-2 border-neutral-800 hover:border-neutral-700 bg-neutral-900/50 hover:bg-neutral-800 text-neutral-300 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  Play with the Demo
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+        
+        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-b from-transparent to-neutral-950 z-10 pointer-events-none" />
+      </section>
+
+      <section id="features" className="py-24 px-4 relative z-10 bg-neutral-950">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16 text-center"
+          >
+            <h2 className="text-4xl md:text-5xl font-black font-cabinet-grotesk mb-4 text-white">
+              Silly simple, yet shockingly powerful.
+            </h2>
+            <p className="text-neutral-400 text-lg">Everything you need to collaborate, packed into a gorgeous dark canvas.</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 auto-rows-[250px]">
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="md:col-span-2 md:row-span-1 rounded-3xl bg-neutral-900/40 border border-white/5 p-8 flex flex-col justify-between overflow-hidden relative group backdrop-blur-sm"
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-[80px] group-hover:bg-green-500/20 transition-colors" />
+              <div>
+                <Feather className="w-10 h-10 text-green-400 mb-4" />
+                <h3 className="text-2xl font-bold text-white mb-2 font-cabinet-grotesk">Zero Latency Drawing</h3>
+                <p className="text-neutral-400 max-w-sm">We engineered the WebSocket layer so perfectly that you'll forget your friends are 3,000 miles away. The ink flows like magic.</p>
+              </div>
+            </motion.div>
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="md:col-span-1 md:row-span-1 rounded-3xl bg-neutral-900/40 border border-white/5 p-8 flex flex-col justify-between relative group backdrop-blur-sm"
+            >
+              <div className="absolute bottom-0 right-0 w-40 h-40 bg-blue-500/10 rounded-full blur-[60px] group-hover:bg-blue-500/20 transition-colors" />
+              <div>
+                <MessageSquare className="w-10 h-10 text-blue-400 mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2 font-cabinet-grotesk">Trash Talk in Chat</h3>
+                <p className="text-neutral-400 text-sm">Built-in side chat so you can judge their drawing skills in real-time.</p>
+              </div>
+            </motion.div>
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="md:col-span-1 md:row-span-1 rounded-3xl bg-neutral-900/40 border border-white/5 p-8 flex flex-col justify-between relative group backdrop-blur-sm"
+            >
+              <div className="absolute top-0 left-0 w-40 h-40 bg-pink-500/10 rounded-full blur-[60px] group-hover:bg-pink-500/20 transition-colors" />
+              <div>
+                <Share2 className="w-10 h-10 text-pink-400 mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2 font-cabinet-grotesk">1-Click Invites</h3>
+                <p className="text-neutral-400 text-sm">Send a link. That's it. No complicated access requests or emails.</p>
+              </div>
+            </motion.div>
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="md:col-span-2 md:row-span-1 rounded-3xl bg-neutral-900/40 border border-white/5 p-8 flex flex-col justify-between relative group overflow-hidden backdrop-blur-sm"
+            >
+              <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-purple-500/10 to-transparent group-hover:from-purple-500/20 transition-colors" />
+              <div className="flex items-start justify-between relative z-10">
+                <div>
+                  <Users className="w-10 h-10 text-purple-400 mb-4" />
+                  <h3 className="text-2xl font-bold text-white mb-2 font-cabinet-grotesk">Any Browser, Any Device</h3>
+                  <p className="text-neutral-400 max-w-md">Open it on Chrome, Safari, your massive desktop monitor, or your tiny phone screen. It just works. Period.</p>
+                </div>
+              </div>
+            </motion.div>
           </div>
-          <p className="mt-4 text-sm text-neutral-400">
-            No signup required for the demo
-          </p>
         </div>
       </section>
 
-      <section id="features" className="py-24 md:py-32 px-4 relative">
-        <div className="container mx-auto">
-          <div className="flex flex-col items-center justify-center mb-16 md:mb-20">
-            <h2 className="text-3xl md:text-5xl font-bold text-center tracking-tight font-cabinet-grotesk text-white">
-              Everything you need to collaborate
+      <section id="use-cases" className="py-24 px-4 relative z-10 bg-neutral-900/20 border-y border-white/5 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16 relative">
+            <h2 className="text-4xl md:text-6xl font-black font-cabinet-grotesk text-white mb-6">
+              Who is this even for?
             </h2>
-            <div className="w-20 h-1 bg-green-500/50 mt-8 rounded-full" />
+            <div className="w-24 h-1.5 bg-green-400 mx-auto rounded-full -rotate-2" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-12 gap-x-8 md:gap-x-12">
-            {[
-              {
-                icon: <Feather size={28} />,
-                title: "Real-time Drawing",
-                desc: "Collaborative canvas with live feedback.",
-              },
-              {
-                icon: <MessageSquare size={28} />,
-                title: "Instant Chat",
-                desc: "Built-in messaging while you work.",
-              },
-              {
-                icon: <Share2 size={28} />,
-                title: "Share & Join",
-                desc: "One-click room sharing with anyone.",
-              },
-              {
-                icon: <Users size={28} />,
-                title: "Any Browser",
-                desc: "Works seamlessly on Chrome, Safari, and Edge.",
-              },
-              {
-                icon: <Code size={28} />,
-                title: "Lightning Fast",
-                desc: "No lag, instant synchronization.",
-              },
-              {
-                icon: <TbBeta size={28} />,
-                title: "Coming Soon",
-                desc: "Voice & video calls.",
-              },
-            ].map((feature, i) => (
-              <div
-                key={i}
-                className="group flex flex-col items-start p-6 rounded-2xl transition-all duration-300 hover:bg-white/5 border border-transparent hover:border-white/10"
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:px-10 mt-12">
+            <motion.div 
+              initial={{ rotate: -5, y: 20 }}
+              whileInView={{ rotate: -2, y: 0 }}
+              whileHover={{ rotate: 0, scale: 1.05, zIndex: 30 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 to-neutral-950 border border-white/10 shadow-2xl relative overflow-hidden group cursor-default"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-[50px] group-hover:bg-blue-500/40 transition-colors" />
+              <div className="text-6xl mb-6 mix-blend-luminosity group-hover:mix-blend-normal transition-all group-hover:scale-110 origin-left">💻</div>
+              <h3 className="text-2xl font-bold mb-3 font-cabinet-grotesk text-white">Remote Teams</h3>
+              <p className="text-neutral-400 leading-relaxed font-medium">Stop pointing at your screen on Zoom. Draw architecture diagrams or wireframes directly together in real-time.</p>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ y: 30 }}
+              whileInView={{ y: 0 }}
+              whileHover={{ scale: 1.05, zIndex: 30 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
+              className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 to-neutral-950 border border-white/10 shadow-2xl relative overflow-hidden group cursor-default"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/20 rounded-full blur-[50px] group-hover:bg-yellow-500/40 transition-colors" />
+              <div className="text-6xl mb-6 mix-blend-luminosity group-hover:mix-blend-normal transition-all group-hover:scale-110 origin-left">🎓</div>
+              <h3 className="text-2xl font-bold mb-3 font-cabinet-grotesk text-white">Teachers & Tutors</h3>
+              <p className="text-neutral-400 leading-relaxed font-medium">Explain math problems visually or diagram history timelines. The kids will actually pay attention.</p>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ rotate: 5, y: 20 }}
+              whileInView={{ rotate: 2, y: 0 }}
+              whileHover={{ rotate: 0, scale: 1.05, zIndex: 30 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+              className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 to-neutral-950 border border-white/10 shadow-2xl relative overflow-hidden group cursor-default"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/20 rounded-full blur-[50px] group-hover:bg-pink-500/40 transition-colors" />
+              <div className="text-6xl mb-6 mix-blend-luminosity group-hover:mix-blend-normal transition-all group-hover:scale-110 origin-left">🎨</div>
+              <h3 className="text-2xl font-bold mb-3 font-cabinet-grotesk text-white">Goofballs</h3>
+              <p className="text-neutral-400 leading-relaxed font-medium">Just want to play tic-tac-toe or draw weird pictures with your long-distance friends? Perfect.</p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="py-16 px-4 pb-0 overflow-hidden relative">
+        <div className="container mx-auto text-center z-10 relative">
+          
+          <div className="mb-24 flex flex-col items-center">
+            <h3 className="text-4xl font-black text-white mb-10 font-cabinet-grotesk tracking-tight">Ready to make a mess?</h3>
+            <Link href="/signup">
+              <button 
+                className="group relative cursor-pointer flex items-center justify-center gap-2 rounded-[2rem] px-12 py-5 bg-green-500 text-black font-black text-xl overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(34,197,94,0.5)] hover:shadow-[0_0_80px_-15px_rgba(34,197,94,0.8)]"
               >
-                <div className="text-green-500/80 mb-6 p-3 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 group-hover:text-green-400 transition-colors">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-3 font-cabinet-grotesk tracking-wide text-neutral-200 group-hover:text-white transition-colors">
-                  {feature.title}
-                </h3>
-                <p className="text-neutral-400 leading-relaxed text-sm md:text-base">
-                  {feature.desc}
-                </p>
-              </div>
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-[pulse_1.5s_infinite] skew-x-[-20deg]" />
+                <span className="relative z-10">Let's go</span>
+                <RxArrowTopRight className="relative z-10 w-6 h-6 group-hover:rotate-45 group-hover:translate-x-1 transition-all duration-300" />
+              </button>
+            </Link>
+          </div>
+
+          <div className="flex justify-center items-center gap-8 mb-12">
+            {[
+              { icon: <BsTwitterX />, link: "https://x.com/I_Break_Prod" },
+              { icon: <FiLinkedin />, link: "https://www.linkedin.com/in/ibreakprod" },
+              { icon: <Globe />, link: "https://hrsht.me" },
+              { icon: <FiGithub />, link: "https://github.com/ibreakprod" },
+              { icon: <FaCode />, link: "http://github.com/iBreakProd/creo" },
+            ].map((social, i) => (
+              <motion.a
+                key={i}
+                whileHover={{ y: -5, color: "#4ade80" }}
+                href={social.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-500 transition-colors cursor-pointer text-2xl"
+              >
+                {social.icon}
+              </motion.a>
             ))}
           </div>
         </div>
-      </section>
-      <section
-        id="how-it-works"
-        className="py-24 md:py-32 px-4 relative"
-      >
-        <div className="container mx-auto">
-          <div className="flex flex-col items-center justify-center mb-16 md:mb-20">
-            <h2 className="text-3xl md:text-5xl font-bold text-center tracking-tight font-cabinet-grotesk text-white">
-              How It Works
-            </h2>
-            <div className="w-20 h-1 bg-green-500/50 mt-8 rounded-full" />
+        <div className="w-full flex justify-center translate-y-20 select-none relative group pointer-events-auto cursor-default">
+          <div className="text-[120px] sm:text-[180px] md:text-[250px] lg:text-[350px] font-pencerio font-bold text-transparent bg-clip-text bg-gradient-to-b from-neutral-800/80 to-neutral-950 leading-none tracking-tighter mix-blend-screen transition-opacity duration-700 group-hover:opacity-0">
+            &nbsp;creo&nbsp;&nbsp;
           </div>
-          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16 max-w-5xl mx-auto">
-            <div className="absolute top-[32px] left-[15%] w-[70%] h-px bg-gradient-to-r from-transparent via-green-500/30 to-transparent hidden md:block"></div>
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-16 h-16 rounded-full bg-neutral-900 border border-green-500/30 flex items-center justify-center text-2xl font-bold font-cabinet-grotesk mb-6 z-10 text-green-400 group-hover:border-green-400 group-hover:bg-green-500/10 transition-all duration-300 shadow-[0_0_30px_-5px_rgba(34,197,94,0.1)]">
-                1
-              </div>
-              <h3 className="text-2xl font-bold mb-3 font-cabinet-grotesk text-neutral-200">Create or Join</h3>
-              <p className="text-neutral-400 leading-relaxed max-w-[250px]">
-                Start a new board or enter a room code instantly.
-              </p>
-            </div>
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-16 h-16 rounded-full bg-neutral-900 border border-green-500/30 flex items-center justify-center text-2xl font-bold font-cabinet-grotesk mb-6 z-10 text-green-400 group-hover:border-green-400 group-hover:bg-green-500/10 transition-all duration-300 shadow-[0_0_30px_-5px_rgba(34,197,94,0.1)]">
-                2
-              </div>
-              <h3 className="text-2xl font-bold mb-3 font-cabinet-grotesk text-neutral-200">Draw & Chat</h3>
-              <p className="text-neutral-400 leading-relaxed max-w-[250px]">
-                Collaborate with real-time tools and fluid messaging.
-              </p>
-            </div>
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-16 h-16 rounded-full bg-neutral-900 border border-green-500/30 flex items-center justify-center text-2xl font-bold font-cabinet-grotesk mb-6 z-10 text-green-400 group-hover:border-green-400 group-hover:bg-green-500/10 transition-all duration-300 shadow-[0_0_30px_-5px_rgba(34,197,94,0.1)]">
-                3
-              </div>
-              <h3 className="text-2xl font-bold mb-3 font-cabinet-grotesk text-neutral-200">Share Ideas</h3>
-              <p className="text-neutral-400 leading-relaxed max-w-[250px]">
-                Save and securely continue your session later.
-              </p>
-            </div>
+          <div className="absolute inset-x-0 top-0 flex justify-center text-[120px] sm:text-[180px] md:text-[250px] lg:text-[350px] font-pencerio font-bold text-transparent bg-clip-text bg-gradient-to-b from-green-500 to-green-900 leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(34,197,94,0.6)] opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+            &nbsp;creo&nbsp;&nbsp;
           </div>
         </div>
-      </section>
-
-      <section id="use-cases" className="py-24 md:py-32 px-4 relative">
-        <div className="container mx-auto">
-          <div className="flex flex-col items-center justify-center mb-16 md:mb-20">
-            <h2 className="text-3xl md:text-5xl font-bold text-center tracking-tight font-cabinet-grotesk text-white">
-              Perfect For...
-            </h2>
-            <div className="w-20 h-1 bg-green-500/50 mt-8 rounded-full" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-x-16">
-            <div className="flex flex-col border-l-2 border-green-500/20 pl-8 hover:border-green-500/50 transition-colors duration-300">
-              <h3 className="text-2xl font-bold mb-4 font-cabinet-grotesk text-neutral-200">Remote Teams</h3>
-              <p className="text-neutral-400 leading-relaxed">
-                Daily standups, sprint planning, and brainstorming sessions that
-                feel like you're in the exact same room.
-              </p>
-            </div>
-            <div className="flex flex-col border-l-2 border-blue-500/20 pl-8 hover:border-blue-500/50 transition-colors duration-300">
-              <h3 className="text-2xl font-bold mb-4 font-cabinet-grotesk text-neutral-200">Education</h3>
-              <p className="text-neutral-400 leading-relaxed">
-                Interactive lessons, student collaboration, and visual learning
-                that visually engages the entire classroom.
-              </p>
-            </div>
-            <div className="flex flex-col border-l-2 border-purple-500/20 pl-8 hover:border-purple-500/50 transition-colors duration-300">
-              <h3 className="text-2xl font-bold mb-4 font-cabinet-grotesk text-neutral-200">Creative Work</h3>
-              <p className="text-neutral-400 leading-relaxed">
-                Design reviews, wireframing, and creative workshops where ideas
-                can flow freely across the canvas.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section id="footer" className="py-16 px-4">
-        <div className="container mx-auto text-center">
-          <div className="flex justify-around items-center mb-[200px] md:mb-[300px]">
-            <div className="hover:scale-110 transition-all duration-300">
-              <a
-                href="https://x.com/I_Break_Prod"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <BsTwitterX className="w-6 h-6 md:w-7 md:h-7" />
-              </a>
-            </div>
-            <div className="hover:scale-110 transition-all duration-300">
-              <a
-                href="https://www.linkedin.com/in/ibreakprod"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <FiLinkedin className="w-6 h-6 md:w-7 md:h-7" />
-              </a>
-            </div>
-            <div className="hover:scale-110 transition-all duration-300">
-              <a
-                href="https://hrsht.me"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <Globe className="w-6 h-6 md:w-7 md:h-7" />
-              </a>
-            </div>
-            <div className="hover:scale-110 transition-all duration-300">
-              <a
-                href="https://github.com/ibreakprod"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <FiGithub className="w-6 h-6 md:w-7 md:h-7" />
-              </a>
-            </div>
-            <div className="hover:scale-110 transition-all duration-300">
-              <a
-                href="http://github.com/iBreakProd/creo"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <FaCode className="w-6 h-6 md:w-7 md:h-7" />
-              </a>
-            </div>
-          </div>
-          <div className="flex w-full items-center justify-center cursor-default">
-            <div className="text-6xl sm:text-8xl md:text-9xl lg:text-[150px] xl:text-[200px] font-pencerio font-bold bg-clip-text text-transparent bg-gradient-to-b from-green-500/45 to-green-900/45 px-4 md:px-10 leading-none">
-              meetdraw
-            </div>
-          </div>
-        </div>
-      </section>
+      </footer>
     </div>
   );
 }
