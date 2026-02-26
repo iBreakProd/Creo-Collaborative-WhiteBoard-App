@@ -370,6 +370,33 @@ const DemoCanvas = () => {
           return;
         }
 
+        if (event.key === "Backspace" || event.key === "Delete") {
+          if (selectedDraw.current && activeActionRef.current === "select") {
+            const drawToDelete = selectedDraw.current;
+            diagrams.current = diagrams.current.filter((draw) => draw.id !== drawToDelete.id);
+            const action: Action = {
+              type: "erase",
+              originalDraw: JSON.parse(JSON.stringify(drawToDelete)),
+              modifiedDraw: null,
+            };
+            const { undoRedoArray, undoRedoIndex } = pushToUndoRedoArray(
+              action,
+              undoRedoArrayRef.current,
+              undoRedoIndexRef.current,
+              null,
+              user!.id,
+              roomId
+            );
+            undoRedoArrayRef.current = undoRedoArray;
+            undoRedoIndexRef.current = undoRedoIndex;
+            updateUndoRedoState();
+
+            selectedDraw.current = null;
+            setSelectedShape(null);
+            shapeSelectionBox.current = null;
+          }
+        }
+
         if (event.metaKey && !event.shiftKey && event.key === "z") {
           event.preventDefault();
           executeUndo();
@@ -445,6 +472,7 @@ const DemoCanvas = () => {
     };
 
     const handleMouseDown = (event: MouseEvent) => {
+      modifiedDrawState.current = null;
       setIsDragging(true);
       if (activeActionRef.current === "pan") {
         panStartPoint.current = { x: event.offsetX, y: event.offsetY };
@@ -842,25 +870,28 @@ const DemoCanvas = () => {
           }
         }
         if (originalDrawState.current && modifiedDrawState.current) {
-          const action: Action = {
-            type: "resize",
-            originalDraw: JSON.parse(JSON.stringify(originalDrawState.current)),
-            modifiedDraw: JSON.parse(JSON.stringify(modifiedDrawState.current)),
-          };
-          const { undoRedoArray, undoRedoIndex } = pushToUndoRedoArray(
-            action,
-            undoRedoArrayRef.current,
-            undoRedoIndexRef.current,
-            null,
-            user!.id,
-            roomId
-          );
+          if (JSON.stringify(originalDrawState.current) !== JSON.stringify(modifiedDrawState.current)) {
+            const action: Action = {
+              type: "resize",
+              originalDraw: JSON.parse(JSON.stringify(originalDrawState.current)),
+              modifiedDraw: JSON.parse(JSON.stringify(modifiedDrawState.current)),
+            };
+            const { undoRedoArray, undoRedoIndex } = pushToUndoRedoArray(
+              action,
+              undoRedoArrayRef.current,
+              undoRedoIndexRef.current,
+              null,
+              user!.id,
+              roomId
+            );
+
+            undoRedoArrayRef.current = undoRedoArray;
+            undoRedoIndexRef.current = undoRedoIndex;
+            updateUndoRedoState();
+          }
 
           modifiedDrawState.current = null;
           originalDrawState.current = null;
-          undoRedoArrayRef.current = undoRedoArray;
-          undoRedoIndexRef.current = undoRedoIndex;
-          updateUndoRedoState();
         }
         setActiveAction("select");
         resizingInfo.current = null;
@@ -887,25 +918,28 @@ const DemoCanvas = () => {
           return;
         }
         if (originalDrawState.current && modifiedDrawState.current) {
-          const action: Action = {
-            type: "move",
-            originalDraw: JSON.parse(JSON.stringify(originalDrawState.current)),
-            modifiedDraw: JSON.parse(JSON.stringify(modifiedDrawState.current)),
-          };
-          const { undoRedoArray, undoRedoIndex } = pushToUndoRedoArray(
-            action,
-            undoRedoArrayRef.current,
-            undoRedoIndexRef.current,
-            null,
-            user!.id,
-            roomId
-          );
+          if (JSON.stringify(originalDrawState.current) !== JSON.stringify(modifiedDrawState.current)) {
+            const action: Action = {
+              type: "move",
+              originalDraw: JSON.parse(JSON.stringify(originalDrawState.current)),
+              modifiedDraw: JSON.parse(JSON.stringify(modifiedDrawState.current)),
+            };
+            const { undoRedoArray, undoRedoIndex } = pushToUndoRedoArray(
+              action,
+              undoRedoArrayRef.current,
+              undoRedoIndexRef.current,
+              null,
+              user!.id,
+              roomId
+            );
+
+            undoRedoArrayRef.current = undoRedoArray;
+            undoRedoIndexRef.current = undoRedoIndex;
+            updateUndoRedoState();
+          }
 
           modifiedDrawState.current = null;
           originalDrawState.current = null;
-          undoRedoArrayRef.current = undoRedoArray;
-          undoRedoIndexRef.current = undoRedoIndex;
-          updateUndoRedoState();
         }
         setActiveAction("select");
       }
