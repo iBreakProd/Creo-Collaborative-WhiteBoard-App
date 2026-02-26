@@ -2,6 +2,8 @@
 
 Built by [Harshit](https://www.hrsht.me).
 
+Project live at [Creo](https://creo.hrsht.me)
+
 Creo is a high-performance, real-time collaborative whiteboarding application. The goal of this project was to explore the challenges of synchronizing complex, mutable state across multiple clients with minimal latency, while pushing the boundaries of what can be rendered smoothly in the browser.
 
 This project served as a deep dive into building scalable, distributed systems using a modern monorepo architecture. 
