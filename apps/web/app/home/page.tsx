@@ -2,6 +2,7 @@ import MainPage from "@/components/home/MainPage";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import axiosInstance from "@/lib/axios/axiosInstance";
+import { CloudCog } from "lucide-react";
 
 const page = async () => {
   const jwtCookie = (await cookies()).get("jwt");

@@ -44,6 +44,7 @@ const UserCard = () => {
             className="cursor-pointer text-red-400 hover:text-red-500 transition-colors p-1"
             onClick={() => {
               signoutAction();
+              sessionStorage.clear();
               router.replace("/signin");
             }}
             title="Sign Out"

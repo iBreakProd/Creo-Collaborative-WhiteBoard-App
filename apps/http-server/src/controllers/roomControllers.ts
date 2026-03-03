@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { db, roomsTable, roomParticipantsTable, chatsTable, drawsTable, usersTable } from "@workspace/db/client";
 import { random } from "../utils";
 import { JoinRoomSchema } from "@workspace/common";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export async function createRoomController(req: Request, res: Response) {
   try {
@@ -75,6 +75,21 @@ export async function joinRoomController(req: Request, res: Response) {
       return;
     }
 
+    const existingParticipation = await db.select()
+        .from(roomParticipantsTable)
+        .where(and(
+            eq(roomParticipantsTable.roomId, room.id),
+            eq(roomParticipantsTable.userId, userId)
+        ));
+        
+    if (existingParticipation.length > 0) {
+        res.json({
+            message: "Room Joined Successfully",
+            room,
+        });
+        return;
+    }
+
     // Insert into participants
     try {
         await db.insert(roomParticipantsTable).values({
@@ -133,8 +148,15 @@ export async function fetchAllRoomsController(req: Request, res: Response) {
     .where(eq(roomParticipantsTable.userId, userId))
     .orderBy(desc(roomsTable.createdAt));
 
-    // For each room, fetch latest Chat and Draw
-    const roomsWithDetails = await Promise.all(userRooms.map(async (room) => {
+    const uniqueUserRoomsMap = new Map();
+    userRooms.forEach(room => {
+        if (!uniqueUserRoomsMap.has(room.id)) {
+            uniqueUserRoomsMap.set(room.id, room);
+        }
+    });
+    const uniqueUserRooms = Array.from(uniqueUserRoomsMap.values());
+
+    const roomsWithDetails = await Promise.all(uniqueUserRooms.map(async (room) => {
         const latestChat = await db.select({
             content: chatsTable.content,
             createdAt: chatsTable.createdAt,
@@ -145,7 +167,7 @@ export async function fetchAllRoomsController(req: Request, res: Response) {
         .from(chatsTable)
         .innerJoin(usersTable, eq(chatsTable.userId, usersTable.id))
         .where(eq(chatsTable.roomId, room.id))
-        .orderBy(desc(chatsTable.serialNumber)) // serialNumber is auto inc
+        .orderBy(desc(chatsTable.serialNumber))
         .limit(1);
 
         const latestDraws = await db.select()
