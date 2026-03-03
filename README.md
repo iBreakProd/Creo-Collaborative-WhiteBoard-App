@@ -9,7 +9,9 @@ Project live at [Creo](https://creo.hrsht.me)
 <a href="https://youtu.be/6OiZJIKpL0c" target="_blank">
   <img width="1440" height="900" alt="Creo - The Collaborative Whiteboard" src="https://github.com/user-attachments/assets/50d6f518-7d22-418c-8e4d-3f5f454a0cd9" />
 </a>  
-<p><b>Creo - The Collaborative Whiteboard</b></p>
+<p><b>Creo - The Collaborative Whiteboard</b><a href="https://youtu.be/6OiZJIKpL0c" target="_blank">
+  Video ^^^
+</a>  </p>
 
 Creo is a high-performance, real-time collaborative whiteboarding application. The goal of this project was to explore the challenges of synchronizing complex, mutable state across multiple clients with minimal latency, while pushing the boundaries of what can be rendered smoothly in the browser.
 
